@@ -1,7 +1,6 @@
-# ISOLATION AI
-
 <img width="1015" height="231" alt="image" src="https://github.com/user-attachments/assets/2b27e1f2-b832-4596-9c71-67099e5b1db1" />
 
+# ISOLATION AI
 > Inteligência Artificial aplicada a jogos adversariais utilizando Minimax, Poda Alfa-Beta e Heurística de Liberdade Relativa.
 
 ---
