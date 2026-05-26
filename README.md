@@ -3,6 +3,8 @@
 # ISOLATION AI
 > Inteligência Artificial aplicada a jogos adversariais utilizando Minimax, Poda Alfa-Beta e Heurística de Liberdade Relativa.
 
+dc: https://arthurxavierz.github.io/heuristic-isolation-ai/
+
 ---
 
 ## Sobre o Projeto
@@ -165,8 +167,3 @@ Este projeto foi desenvolvido com o objetivo de explorar:
 # Autor
 
 Desenvolvido por **Arthur Xavier**.
-
----
-
-
-Este projeto está sob a licença MIT.
