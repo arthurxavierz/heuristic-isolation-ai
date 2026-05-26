@@ -1,0 +1,3118 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ISOLATION · IA · ARTHUR XAVIER</title>
+<link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=JetBrains+Mono:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink:     #07080d;
+  --ink2:    #0e1018;
+  --ink3:    #14161f;
+  --seam:    #2a2d3a;
+  --fog:     #4a5070;
+  --snow:    #f0f0f0;
+  --snow2:   #9aa0b8;
+
+  /* NOVA PALETA: Ouro + Branco + Metálico */
+  --gold:    #ffd700;
+  --gold2:   #ffb300;
+  --gold3:   #c8860a;
+  --silver:  #e8e8e8;
+  --silver2: #b0b8c8;
+  --chrome:  #d0dcea;
+  --bronze:  #a07030;
+  --iron:    #3a3f50;
+
+  /* Jogador = Ouro; IA = Branco/Prata */
+  --p1:      #ffd700;
+  --p1g:     rgba(255,215,0,.20);
+  --p2:      #e8e8e8;
+  --p2g:     rgba(232,232,232,.15);
+  --valid:   #ffe066;
+  --validg:  rgba(255,224,102,.18);
+  --blocked: #0a0b10;
+
+  --cell-sz: 64px;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--ink);color:var(--snow);font-family:'JetBrains Mono',monospace;overflow-x:hidden}
+
+/* ── LOADER ── */
+#loader{
+  position:fixed;inset:0;z-index:9999;
+  background:var(--ink);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;
+  transition:opacity .5s,visibility .5s;
+}
+#loader.gone{opacity:0;visibility:hidden;pointer-events:none}
+.loader-logo{
+  font-family:'Black Ops One',sans-serif;
+  font-size:clamp(3rem,8vw,5.5rem);letter-spacing:.15em;
+  background:linear-gradient(135deg,var(--gold3),var(--gold),var(--silver),var(--chrome));
+  background-size:300% 300%;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  animation:mshift 2s ease infinite;
+  filter:drop-shadow(0 0 30px rgba(255,215,0,.4));
+}
+@keyframes mshift{0%,100%{background-position:0 50%}50%{background-position:100% 50%}}
+.lbar-wrap{width:240px;height:2px;background:var(--ink3);border-radius:2px;overflow:hidden}
+.lbar{height:100%;background:linear-gradient(90deg,var(--gold3),var(--gold),var(--chrome));border-radius:2px;width:0%;transition:width .05s}
+.lpct{font-size:.65rem;letter-spacing:.3em;color:var(--fog)}
+
+/* ── HERO ── */
+.hero{
+  min-height:100vh;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  position:relative;overflow:hidden;text-align:center;padding:40px 20px;
+}
+.hero-bg{
+  position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(255,215,0,.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,215,0,.04) 1px,transparent 1px);
+  background-size:52px 52px;
+  animation:grid-drift 24s linear infinite;
+}
+@keyframes grid-drift{from{background-position:0 0}to{background-position:52px 52px}}
+
+.hero-eyebrow{font-size:.62rem;letter-spacing:.5em;color:var(--gold3);text-transform:uppercase;margin-bottom:14px;opacity:0;animation:rise .8s ease .4s forwards}
+.hero-title{
+  font-family:'Black Ops One',sans-serif;
+  font-size:clamp(3.5rem,10vw,8rem);letter-spacing:.12em;line-height:.95;
+  background:linear-gradient(135deg,var(--silver) 0%,var(--gold) 40%,var(--gold3) 70%,var(--chrome) 100%);
+  background-size:200% 200%;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  animation:mshift 3s ease infinite,rise .8s ease .6s both;
+  filter:drop-shadow(0 4px 40px rgba(255,215,0,.25));opacity:0;
+}
+.hero-sub{font-size:clamp(.8rem,2vw,1rem);color:var(--snow2);letter-spacing:.2em;margin-top:18px;opacity:0;animation:rise .8s ease .8s forwards}
+.hero-badges{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:28px;opacity:0;animation:rise .8s ease 1s forwards}
+.hbadge{padding:5px 16px;border:1px solid;border-radius:2px;font-size:.58rem;letter-spacing:.2em;text-transform:uppercase}
+.hbadge-gold{border-color:var(--gold);color:var(--gold)}
+.hbadge-silver{border-color:var(--silver2);color:var(--silver2)}
+.hbadge-chrome{border-color:var(--chrome);color:var(--chrome)}
+.hero-cta{margin-top:44px;display:flex;gap:14px;flex-wrap:wrap;justify-content:center;opacity:0;animation:rise .8s ease 1.2s forwards}
+.btn-metal{
+  padding:13px 32px;font-family:'Black Ops One',sans-serif;font-size:.82rem;letter-spacing:.2em;
+  border:none;border-radius:3px;cursor:pointer;position:relative;overflow:hidden;
+  transition:transform .2s,box-shadow .2s;text-decoration:none;display:inline-block;
+}
+.btn-metal::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);
+  transform:translateX(-100%);transition:transform .4s;
+}
+.btn-metal:hover::before{transform:translateX(100%)}
+.btn-metal:hover{transform:translateY(-2px);box-shadow:0 10px 36px rgba(0,0,0,.5)}
+.btn-primary{background:linear-gradient(135deg,var(--gold3),var(--gold));color:#07080d}
+.btn-outline{background:transparent;border:1px solid var(--fog);color:var(--snow2)}
+.scroll-hint{position:absolute;bottom:36px;display:flex;flex-direction:column;align-items:center;gap:8px;opacity:0;animation:rise .8s ease 1.6s forwards}
+.scroll-arrow{width:18px;height:18px;border-right:2px solid var(--gold3);border-bottom:2px solid var(--gold3);transform:rotate(45deg);animation:bdwn .8s ease-in-out infinite alternate}
+@keyframes bdwn{to{transform:rotate(45deg) translateY(6px)}}
+.scroll-lbl{font-size:.52rem;letter-spacing:.3em;color:var(--fog)}
+@keyframes rise{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── REVEAL ── */
+.reveal{opacity:0;transform:translateY(36px);transition:opacity .7s,transform .7s}
+.reveal.visible{opacity:1;transform:none}
+
+/* ── SECTION ── */
+.section{padding:90px 20px;max-width:1140px;margin:0 auto;display:flex;flex-direction:column;align-items:center;width:100%;box-sizing:border-box}
+.section>.section-tag,.section>h2,.section>.section-lead{width:100%;max-width:860px}
+.section>.rules-grid{width:100%;max-width:1100px;margin-left:auto;margin-right:auto}
+.section-tag{font-size:.58rem;letter-spacing:.5em;color:var(--gold3);text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:10px}
+.section-tag::before{content:'';display:block;width:28px;height:1px;background:var(--gold3)}
+.section-title{font-family:'Black Ops One',sans-serif;font-size:clamp(1.8rem,4vw,2.8rem);letter-spacing:.1em;line-height:1.1;margin-bottom:14px}
+.section-lead{font-size:.88rem;color:var(--snow2);line-height:1.8;max-width:600px}
+
+/* ── RULES ── */
+.rules-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:44px;width:100%;max-width:1100px;margin-left:auto;margin-right:auto}
+.rule-card{
+  background:var(--ink2);border:1px solid var(--seam);border-radius:6px;padding:26px 22px;
+  position:relative;overflow:hidden;transition:transform .25s,border-color .25s;
+}
+.rule-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.rule-card:nth-child(1)::before{background:linear-gradient(90deg,var(--gold3),var(--gold))}
+.rule-card:nth-child(2)::before{background:linear-gradient(90deg,var(--silver2),var(--chrome))}
+.rule-card:nth-child(3)::before{background:linear-gradient(90deg,var(--gold),var(--gold3))}
+.rule-card:nth-child(4)::before{background:linear-gradient(90deg,var(--p1),var(--chrome))}
+.rule-card:nth-child(5)::before{background:linear-gradient(90deg,var(--p2),var(--silver2))}
+.rule-card:hover{transform:translateY(-4px);border-color:var(--fog)}
+.rule-num{font-family:'Black Ops One',sans-serif;font-size:2.8rem;line-height:1;margin-bottom:10px;background:linear-gradient(135deg,var(--gold3),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.rule-title{font-size:.72rem;letter-spacing:.2em;color:var(--snow);margin-bottom:6px;text-transform:uppercase}
+.rule-desc{font-size:.72rem;color:var(--snow2);line-height:1.7}
+
+/* ── DIVIDER ── */
+.metal-divider{width:100%;height:1px;background:linear-gradient(90deg,transparent,var(--gold3) 30%,var(--gold) 50%,var(--gold3) 70%,transparent);opacity:.25;margin:0 auto}
+
+/* ── GAME SECTION ── */
+#game-section{padding:70px 20px 90px;background:var(--ink2);position:relative;overflow:hidden}
+#game-section::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(255,215,0,.05),transparent 60%);pointer-events:none}
+.game-header{text-align:center;max-width:700px;margin:0 auto 44px}
+.game-layout{display:grid;grid-template-columns:1fr auto 1fr;gap:20px;align-items:start;max-width:1000px;margin:0 auto}
+
+/* ══════════════════════════════════════
+   SIDE PANELS — Metallic Redesign
+══════════════════════════════════════ */
+.gside{display:flex;flex-direction:column;gap:10px}
+
+/* ── PANEL CONTAINER ── */
+.gpanel{
+  position:relative;overflow:hidden;
+  background:
+    linear-gradient(160deg, #1a1c26 0%, #0c0d13 60%, #111318 100%);
+  border:1px solid rgba(255,215,0,.18);
+  border-radius:0;
+  padding:0;
+  clip-path:polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+  box-shadow:
+    inset 0 0 30px rgba(0,0,0,.6),
+    0 2px 20px rgba(0,0,0,.5),
+    0 0 1px rgba(255,215,0,.1);
+}
+.gpanel::before{
+  content:'';position:absolute;inset:0;pointer-events:none;z-index:0;
+  background:
+    repeating-linear-gradient(0deg, transparent, transparent 28px, rgba(255,215,0,.025) 28px, rgba(255,215,0,.025) 29px),
+    repeating-linear-gradient(90deg, transparent, transparent 28px, rgba(255,215,0,.015) 28px, rgba(255,215,0,.015) 29px);
+}
+.gpanel::after{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--gold3),var(--gold),var(--gold3),transparent);
+  opacity:.7;
+}
+.gpanel-inner{position:relative;z-index:1;padding:14px 16px}
+
+/* ── PANEL TITLE ── */
+.gpanel-title{
+  font-family:'Black Ops One',sans-serif;
+  font-size:.6rem;letter-spacing:.5em;text-transform:uppercase;
+  color:transparent;
+  background:linear-gradient(90deg,var(--gold3),var(--gold),var(--gold2));
+  -webkit-background-clip:text;
+  margin-bottom:10px;
+  display:flex;align-items:center;gap:8px;
+}
+.gpanel-title::before{
+  content:'';display:block;width:3px;height:12px;flex-shrink:0;
+  background:linear-gradient(180deg,var(--gold),var(--gold3));
+}
+
+/* ── PLAYER CARD ── */
+.pcard{
+  position:relative;overflow:hidden;
+  background:linear-gradient(160deg,#17181f 0%,#0a0b10 100%);
+  border:1px solid rgba(255,215,0,.12);
+  border-radius:0;
+  padding:0;
+  clip-path:polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%);
+  transition:border-color .3s,box-shadow .3s;
+  box-shadow:inset 0 0 20px rgba(0,0,0,.5);
+}
+.pcard::after{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--gold3) 40%,transparent);
+  opacity:.5;
+}
+.pcard-inner{position:relative;z-index:1;padding:14px 16px}
+.pcard.active-p1{border-color:var(--gold);box-shadow:0 0 20px rgba(255,215,0,.15),inset 0 0 20px rgba(255,215,0,.04)}
+.pcard.active-p2{border-color:var(--silver);box-shadow:0 0 20px rgba(232,232,232,.12),inset 0 0 20px rgba(232,232,232,.03)}
+
+/* ── PLAYER NAME ── */
+.pcard-name{
+  font-family:'Black Ops One',sans-serif;
+  font-size:1.1rem;letter-spacing:.2em;
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:12px;
+  text-shadow:0 0 20px currentColor;
+}
+.pcard-name-p1{
+  background:linear-gradient(135deg,var(--gold3) 0%,var(--gold) 45%,#fff9c0 70%,var(--gold2) 100%);
+  -webkit-background-clip:text;color:transparent;
+}
+.pcard-name-p2{
+  background:linear-gradient(135deg,#8090a8 0%,var(--silver2) 40%,#ffffff 65%,var(--chrome) 100%);
+  -webkit-background-clip:text;color:transparent;
+}
+
+/* ── PLAYER BADGE (replaces pball) ── */
+.pball{
+  width:22px;height:22px;border-radius:3px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Black Ops One',sans-serif;font-size:.5rem;letter-spacing:.05em;
+  position:relative;overflow:hidden;
+}
+.pball::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.15),transparent);}
+.pball-p1{
+  background:linear-gradient(135deg,var(--gold3),var(--gold));
+  box-shadow:0 0 10px rgba(255,215,0,.4),inset 0 1px 2px rgba(255,255,200,.3);
+  color:#07080d;
+}
+.pball-p2{
+  background:linear-gradient(135deg,#6a7080,var(--silver2));
+  box-shadow:0 0 10px rgba(200,210,230,.3),inset 0 1px 2px rgba(255,255,255,.4);
+  color:#07080d;
+}
+
+/* ── STAT ROW ── */
+.pstat{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:5px 0;
+  border-top:1px solid rgba(42,45,58,.7);
+  position:relative;
+}
+.pstat-lbl{
+  font-family:'Black Ops One',sans-serif;
+  font-size:.44rem;letter-spacing:.3em;color:var(--fog);text-transform:uppercase;
+}
+.pstat-val{
+  font-family:'Black Ops One',sans-serif;
+  font-size:.75rem;letter-spacing:.1em;color:var(--snow);
+  background:linear-gradient(135deg,var(--silver2),var(--chrome));
+  -webkit-background-clip:text;color:transparent;
+}
+.pstat-val.good,.pstat-val.p1c{
+  background:linear-gradient(135deg,var(--gold3),var(--gold),#fff8a0);
+  -webkit-background-clip:text;color:transparent;
+}
+.pstat-val.p2c{
+  background:linear-gradient(135deg,var(--silver2),#fff);
+  -webkit-background-clip:text;color:transparent;
+}
+
+/* ══════════════════════════════════════
+   BUTTONS — Metallic Tiles
+══════════════════════════════════════ */
+.btn-group{display:flex;flex-direction:column;gap:4px}
+
+.gbutton{
+  width:100%;padding:9px 12px;
+  background:linear-gradient(160deg,#1c1e28,#0f1016);
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:0;
+  color:var(--fog);
+  font-family:'Black Ops One',sans-serif;
+  font-size:.52rem;letter-spacing:.18em;
+  cursor:pointer;text-align:left;
+  display:flex;justify-content:space-between;align-items:center;
+  transition:all .18s;
+  position:relative;overflow:hidden;
+  clip-path:polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+}
+.gbutton::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:2px;
+  background:linear-gradient(180deg,transparent,var(--fog),transparent);
+  transition:background .18s;
+}
+.gbutton::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.04),transparent);
+  transform:translateX(-100%);transition:transform .35s;
+}
+.gbutton:hover::after{transform:translateX(100%)}
+.gbutton:hover{
+  border-color:rgba(255,215,0,.35);color:var(--gold);
+  background:linear-gradient(160deg,#1f2030,#13141c);
+}
+.gbutton:hover::before{background:linear-gradient(180deg,transparent,var(--gold3),transparent);}
+
+/* Selected states */
+.gbutton.sel-diff{
+  background:linear-gradient(160deg,#201a00,#141000);
+  border-color:rgba(255,215,0,.5);color:var(--gold);
+  box-shadow:inset 0 0 15px rgba(255,215,0,.06);
+}
+.gbutton.sel-diff::before{background:linear-gradient(180deg,transparent,var(--gold),transparent);}
+
+.gbutton.sel-algo{
+  background:linear-gradient(160deg,#181c22,#0f1118);
+  border-color:rgba(208,220,234,.5);color:var(--chrome);
+  box-shadow:inset 0 0 15px rgba(208,220,234,.06);
+}
+.gbutton.sel-algo::before{background:linear-gradient(180deg,transparent,var(--chrome),transparent);}
+
+.gbutton.sel-sz{
+  background:linear-gradient(160deg,#161820,#0e1016);
+  border-color:rgba(176,184,200,.5);color:var(--silver2);
+  box-shadow:inset 0 0 15px rgba(176,184,200,.06);
+}
+.gbutton.sel-sz::before{background:linear-gradient(180deg,transparent,var(--silver2),transparent);}
+
+.gbutton.sel-mode{
+  background:linear-gradient(160deg,#201a00,#141000);
+  border-color:var(--gold);color:var(--gold);
+  box-shadow:0 0 14px rgba(255,215,0,.12),inset 0 0 15px rgba(255,215,0,.06);
+}
+.gbutton.sel-mode::before{background:linear-gradient(180deg,transparent,var(--gold),transparent);}
+
+/* Btn span sub-labels */
+.gbutton span[style*="opacity"]{
+  font-family:'JetBrains Mono',monospace;
+  font-size:.44rem;letter-spacing:.05em;
+}
+
+/* ══════════════════════════════════════
+   PERF PANEL
+══════════════════════════════════════ */
+.pbar-wrap{margin-top:4px}
+.pbar-lbl{
+  display:flex;justify-content:space-between;
+  font-family:'Black Ops One',sans-serif;
+  font-size:.44rem;letter-spacing:.2em;color:var(--fog);margin-bottom:4px;
+}
+.pbar-lbl span:last-child{
+  font-family:'JetBrains Mono',monospace;font-size:.44rem;
+  color:var(--snow2);letter-spacing:.05em;
+}
+.pbar-bg{
+  height:5px;
+  background:linear-gradient(90deg,#0a0b10,#14161e);
+  border:1px solid rgba(255,255,255,.06);
+  overflow:hidden;margin-bottom:10px;
+  position:relative;
+}
+.pbar-bg::before{
+  content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(90deg,transparent,transparent 10px,rgba(255,255,255,.025) 10px,rgba(255,255,255,.025) 11px);
+}
+.pbar-fill{height:100%;transition:width .5s ease;position:relative;}
+.pbar-fill::after{content:'';position:absolute;right:0;top:0;bottom:0;width:3px;background:rgba(255,255,255,.5);}
+.pbar-mm{background:linear-gradient(90deg,var(--gold3),var(--gold))}
+.pbar-ab{background:linear-gradient(90deg,#4a5070,var(--silver2))}
+
+/* ══════════════════════════════════════
+   STATUS BAR
+══════════════════════════════════════ */
+.gstatus{
+  background:linear-gradient(90deg,#0d0e14,#111318,#0d0e14);
+  border:1px solid rgba(255,215,0,.15);
+  border-radius:0;
+  clip-path:polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px));
+  padding:10px 22px;
+  text-align:center;
+  font-family:'Black Ops One',sans-serif;
+  font-size:.62rem;letter-spacing:.25em;
+  min-height:46px;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  transition:border-color .3s,box-shadow .3s;
+  position:relative;overflow:hidden;
+}
+.gstatus::before{
+  content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(90deg,transparent,transparent 40px,rgba(255,255,255,.015) 40px,rgba(255,255,255,.015) 41px);
+  pointer-events:none;
+}
+.gstatus.s-p1{border-color:rgba(255,215,0,.5);color:var(--gold);box-shadow:0 0 20px rgba(255,215,0,.07)}
+.gstatus.s-p2{border-color:rgba(232,232,232,.4);color:var(--silver2);box-shadow:0 0 20px rgba(200,210,230,.06)}
+.gstatus.s-think{border-color:rgba(200,134,10,.6);color:var(--gold3);box-shadow:0 0 20px rgba(200,134,10,.08)}
+.gstatus.s-win{border-color:var(--gold);color:var(--gold);box-shadow:0 0 30px rgba(255,215,0,.18)}
+.sdot{width:8px;height:8px;border-radius:0;transform:rotate(45deg);flex-shrink:0;animation:sdpulse 1.2s ease-in-out infinite}
+@keyframes sdpulse{0%,100%{opacity:1;transform:rotate(45deg) scale(1)}50%{opacity:.2;transform:rotate(45deg) scale(.4)}}
+
+/* ── BOARD ── */
+.board-wrap{display:flex;flex-direction:column;align-items:center;gap:12px}
+.board-frame{
+  padding:10px;background:var(--ink);border:1px solid var(--seam);border-radius:8px;
+  box-shadow:0 0 50px rgba(0,0,0,.8),inset 0 0 30px rgba(0,0,0,.4);
+  position:relative;
+}
+.board-frame::before{
+  content:'';position:absolute;inset:0;border-radius:8px;
+  background:radial-gradient(ellipse at 50% 0%,rgba(255,215,0,.04),transparent 60%);
+  pointer-events:none;
+}
+.board-grid{display:grid;gap:2px}
+
+/* ── CELL ── */
+.cell{
+  width:var(--cell-sz);height:var(--cell-sz);
+  border-radius:3px;position:relative;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;transition:transform .12s,box-shadow .12s;
+  border:1px solid transparent;
+}
+/* Metal sheen overlay */
+.cell::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.10) 0%,transparent 50%,rgba(0,0,0,.18) 100%);
+  border-radius:inherit;pointer-events:none;z-index:1;
+}
+/* Inner border highlight */
+.cell::after{
+  content:'';position:absolute;inset:0;
+  border-radius:inherit;border:1px solid rgba(255,255,255,.07);
+  pointer-events:none;z-index:2;
+}
+
+/* Empty */
+.cell.c-empty{border-color:rgba(255,255,255,.04)}
+.cell.c-empty:hover{transform:scale(1.06);border-color:rgba(255,215,0,.25)!important}
+
+/* Valid move */
+.cell.c-valid{
+  border:1px solid var(--valid)!important;
+  background:rgba(255,224,102,.10)!important;
+  animation:vglow 1s ease-in-out infinite;cursor:pointer;
+}
+@keyframes vglow{0%,100%{box-shadow:0 0 6px var(--validg)}50%{box-shadow:0 0 16px var(--validg),inset 0 0 8px var(--validg)}}
+.cell.c-valid::after{border-color:rgba(255,224,102,.35)}
+
+/* Block pick highlight */
+.cell.c-block-pick{
+  border:1px solid #ff4444!important;
+  background:rgba(255,60,60,.10)!important;
+  animation:bglow 1s ease-in-out infinite;cursor:crosshair;
+}
+@keyframes bglow{0%,100%{box-shadow:0 0 6px rgba(255,60,60,.3)}50%{box-shadow:0 0 16px rgba(255,60,60,.6),inset 0 0 8px rgba(255,60,60,.2)}}
+.cell.c-block-pick::after{border-color:rgba(255,60,60,.35)}
+
+/* Blocked */
+.cell.c-blocked{
+  background:var(--blocked)!important;
+  border:1px solid #0f1018!important;
+  cursor:not-allowed;
+}
+/* Blocked texture */
+.cell.c-blocked::before{
+  background:repeating-linear-gradient(
+    45deg,
+    transparent,transparent 3px,
+    rgba(255,255,255,.015) 3px,rgba(255,255,255,.015) 4px
+  )!important;
+}
+.block-mark{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:.7rem;color:rgba(255,255,255,.06);z-index:3;
+  background:linear-gradient(135deg,rgba(0,0,0,.5),rgba(0,0,0,.2));
+}
+
+/* Player cells */
+.cell.c-p1{border:1px solid var(--p1)!important;background:linear-gradient(135deg,#0e0f14,#1a1500)!important;box-shadow:0 0 12px var(--p1g)}
+.cell.c-p2{border:1px solid var(--p2)!important;background:linear-gradient(135deg,#0e0f14,#111318)!important;box-shadow:0 0 12px var(--p2g)}
+.cell.c-p1.selected-p{animation:selp1 .7s ease-in-out infinite}
+.cell.c-p2.selected-p{animation:selp2 .7s ease-in-out infinite}
+@keyframes selp1{0%,100%{box-shadow:0 0 0 2px var(--p1),0 0 16px var(--p1g)}50%{box-shadow:0 0 0 3px var(--p1),0 0 26px var(--p1)}}
+@keyframes selp2{0%,100%{box-shadow:0 0 0 2px var(--p2),0 0 16px var(--p2g)}50%{box-shadow:0 0 0 3px var(--p2),0 0 26px var(--p2)}}
+
+/* Piece sphere */
+.piece{
+  width:52%;aspect-ratio:1;border-radius:50%;
+  position:relative;z-index:3;
+  transition:transform .3s cubic-bezier(.34,1.56,.64,1);
+  animation:pfloat 2.6s ease-in-out infinite;
+  flex-shrink:0;
+}
+/* P1 = Gold metallic */
+.piece-p1{
+  background:
+    radial-gradient(circle at 30% 25%, #fff9c0 0%, #ffd700 35%, #c8860a 70%, #7a4e00 100%);
+  box-shadow:
+    0 4px 14px rgba(255,215,0,.55),
+    inset 0 2px 4px rgba(255,255,200,.5),
+    inset 0 -2px 4px rgba(80,40,0,.4);
+}
+/* P2 = Silver/White metallic */
+.piece-p2{
+  background:
+    radial-gradient(circle at 30% 25%, #ffffff 0%, #e8e8e8 35%, #a0a8b8 70%, #5a6070 100%);
+  box-shadow:
+    0 4px 14px rgba(220,220,220,.4),
+    inset 0 2px 4px rgba(255,255,255,.7),
+    inset 0 -2px 4px rgba(60,70,90,.3);
+}
+@keyframes pfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+
+/* Coord label */
+.cell .coord{
+  position:absolute;top:2px;left:4px;
+  font-size:.4rem;color:rgba(255,255,255,.18);
+  z-index:4;letter-spacing:.04em;pointer-events:none;
+}
+
+/* Enter animation */
+@keyframes enter-piece{from{transform:scale(0) rotate(-90deg);opacity:0}to{transform:scale(1) rotate(0deg);opacity:1}}
+.piece.entering{animation:enter-piece .35s cubic-bezier(.34,1.56,.64,1)}
+
+/* ── CONTROLS ── */
+.gcontrols{display:flex;gap:6px;width:100%}
+.gctrl{
+  flex:1;padding:10px;
+  background:linear-gradient(160deg,#171820,#0e0f14);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:0;
+  color:var(--fog);
+  font-family:'Black Ops One',sans-serif;font-size:.5rem;letter-spacing:.2em;
+  cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px;
+  position:relative;overflow:hidden;
+  clip-path:polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+}
+.gctrl::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.05),transparent);transform:translateX(-100%);transition:transform .35s;}
+.gctrl:hover::after{transform:translateX(100%)}
+.gctrl:hover{border-color:rgba(255,215,0,.3);color:var(--gold3)}
+.gctrl.primary{border-color:rgba(255,215,0,.4);color:var(--gold);background:linear-gradient(160deg,#201a00,#141000);box-shadow:inset 0 0 12px rgba(255,215,0,.04)}
+.gctrl.danger:hover{border-color:rgba(232,232,232,.4);color:var(--silver2)}
+
+/* ── LOG ── */
+.glog{
+  background:linear-gradient(160deg,#0c0d12,#080910);
+  border:1px solid rgba(255,215,0,.08);
+  border-left:2px solid rgba(255,215,0,.2);
+  padding:10px 12px;max-height:88px;overflow-y:auto;
+  scrollbar-width:thin;scrollbar-color:rgba(255,215,0,.15) transparent;
+  position:relative;
+}
+.log-e{font-size:.55rem;color:var(--fog);display:flex;gap:7px;padding:2px 0;animation:login .2s ease;line-height:1.5}
+@keyframes login{from{opacity:0;transform:translateX(-5px)}to{opacity:1;transform:none}}
+.log-e.lp1 .lm{color:var(--gold2);font-family:'Black Ops One',sans-serif;letter-spacing:.05em}
+.log-e.lp2 .lm{color:var(--silver2);font-family:'Black Ops One',sans-serif;letter-spacing:.05em}
+.log-e.lsys .lm{color:var(--gold3);font-family:'JetBrains Mono',monospace;font-size:.5rem}
+.lt{opacity:.35;flex-shrink:0;font-family:'JetBrains Mono',monospace;font-size:.48rem}
+
+/* ── TRAIL ── */
+.move-trail{display:flex;flex-wrap:wrap;gap:2px;padding:0 2px}
+.trail-dot{width:6px;height:6px;border-radius:1px;background:var(--seam);transition:background .3s}
+.trail-dot.tp1{background:var(--gold)}
+.trail-dot.tp2{background:var(--silver2)}
+
+/* ── WIN OVERLAY ── */
+.win-overlay{
+  position:fixed;inset:0;z-index:8000;
+  background:rgba(7,8,13,.92);backdrop-filter:blur(10px);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .5s;
+}
+.win-overlay.show{opacity:1;pointer-events:all}
+.win-card{
+  background:linear-gradient(160deg,#1a1c26 0%,#0c0d13 60%,#111318 100%);
+  border:1px solid rgba(255,215,0,.25);
+  border-radius:0;
+  clip-path:polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 20px 100%, 0 calc(100% - 20px));
+  padding:50px 60px;text-align:center;max-width:460px;
+  transform:scale(.8);transition:transform .5s cubic-bezier(.34,1.56,.64,1);
+  position:relative;overflow:hidden;
+  box-shadow:0 0 60px rgba(255,215,0,.12),inset 0 0 40px rgba(0,0,0,.5);
+}
+.win-card::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:
+    repeating-linear-gradient(0deg, transparent, transparent 28px, rgba(255,215,0,.02) 28px, rgba(255,215,0,.02) 29px),
+    repeating-linear-gradient(90deg, transparent, transparent 28px, rgba(255,215,0,.01) 28px, rgba(255,215,0,.01) 29px);
+}
+.win-card::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold3),var(--gold),var(--gold3),transparent);}
+.win-overlay.show .win-card{transform:scale(1)}
+.win-label{
+  font-family:'Black Ops One',sans-serif;
+  font-size:.52rem;letter-spacing:.6em;color:var(--fog);margin-bottom:12px;
+  position:relative;z-index:1;
+}
+.win-name{
+  font-family:'Black Ops One',sans-serif;
+  font-size:clamp(3rem,8vw,5.5rem);letter-spacing:.15em;margin-bottom:6px;
+  position:relative;z-index:1;
+  animation:win-pulse 1.8s ease-in-out infinite;
+}
+@keyframes win-pulse{
+  0%,100%{filter:drop-shadow(0 0 20px rgba(255,215,0,.4))}
+  50%{filter:drop-shadow(0 0 50px rgba(255,215,0,.9)) drop-shadow(0 0 80px rgba(255,215,0,.3))}
+}
+.win-name.wp2{animation:win-pulse-p2 1.8s ease-in-out infinite}
+@keyframes win-pulse-p2{
+  0%,100%{filter:drop-shadow(0 0 20px rgba(208,220,234,.4))}
+  50%{filter:drop-shadow(0 0 50px rgba(208,220,234,.9)) drop-shadow(0 0 80px rgba(208,220,234,.3))}
+}
+.win-name.wp1{background:linear-gradient(135deg,var(--gold3),var(--gold),#fff9c0);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.win-name.wp2{background:linear-gradient(135deg,var(--silver2),#ffffff,var(--chrome));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.win-sub{
+  font-family:'Black Ops One',sans-serif;
+  font-size:.6rem;letter-spacing:.3em;color:var(--gold3);margin-bottom:44px;
+  position:relative;z-index:1;
+}
+/* win-stats removed */
+
+
+
+
+
+
+
+
+.ic-gold::before{background:linear-gradient(90deg,var(--gold3),var(--gold))}
+.ic-silver::before{background:linear-gradient(90deg,var(--silver2),var(--chrome))}
+.ic-chrome::before{background:linear-gradient(90deg,var(--gold),var(--gold3))}
+.ic-bronze::before{background:linear-gradient(90deg,var(--bronze),var(--gold3))}
+
+
+
+
+
+
+.kw{color:var(--gold)}
+.fn{color:var(--gold3)}
+.cm{color:var(--fog);font-style:italic}
+.nm{color:var(--bronze)}
+.op{color:var(--silver2)}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.heu-row{display:flex;align-items:flex-start;gap:14px;padding:14px;border:1px solid var(--seam);border-radius:5px;margin-bottom:8px;background:var(--ink)}
+.heu-num{font-family:'Black Ops One',sans-serif;font-size:1.5rem;background:linear-gradient(135deg,var(--gold3),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;flex-shrink:0;line-height:1}
+.heu-title{font-size:.68rem;letter-spacing:.1em;margin-bottom:3px;color:var(--snow)}
+.heu-desc{font-size:.68rem;color:var(--snow2);line-height:1.6}
+/* ── HEURÍSTICA DEBUG BARS ── */
+.heu-bar-row{display:flex;align-items:center;gap:5px;padding:2px 0}
+.hbar-lbl{font-family:'Black Ops One',sans-serif;font-size:.38rem;letter-spacing:.18em;color:var(--fog);width:44px;flex-shrink:0}
+.hbar-bg{flex:1;height:4px;background:var(--ink3);border-radius:2px;overflow:hidden}
+.hbar-fill{height:100%;border-radius:2px;width:0%;transition:width .4s ease}
+.hbar-val{font-family:'JetBrains Mono',monospace;font-size:.4rem;color:var(--snow2);width:36px;text-align:right;flex-shrink:0}
+
+
+
+
+
+
+
+
+@media(max-width:700px){}
+
+
+
+.explorer-step-info strong{color:var(--gold3)}
+
+.exp-btn{
+  padding:7px 18px;
+  background:linear-gradient(160deg,#1c1e28,#0f1016);
+  border:1px solid rgba(255,255,255,.08);
+  color:var(--fog);
+  font-family:'Black Ops One',sans-serif;font-size:.5rem;letter-spacing:.18em;
+  cursor:pointer;transition:all .18s;
+  clip-path:polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+  position:relative;overflow:hidden;
+}
+.exp-btn::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.05),transparent);transform:translateX(-100%);transition:transform .35s;}
+.exp-btn:hover::after{transform:translateX(100%)}
+.exp-btn:hover{border-color:rgba(255,215,0,.4);color:var(--gold3)}
+.exp-btn.primary{border-color:rgba(255,215,0,.35);color:var(--gold);background:linear-gradient(160deg,#201a00,#141000)}
+.exp-btn:disabled{opacity:.35;cursor:not-allowed}
+
+/* Log panel inside explorer */
+
+
+
+
+
+/* AB badge inside log */
+
+/* progress pip track */
+
+
+
+
+
+
+/* ── FOOTER ── */
+footer{background:var(--ink);border-top:1px solid var(--seam);padding:38px 20px;text-align:center}
+.footer-logo{font-family:'Black Ops One',sans-serif;font-size:1.4rem;letter-spacing:.2em;background:linear-gradient(90deg,var(--gold3),var(--gold),var(--silver2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:10px}
+.footer-meta{font-size:.58rem;color:var(--fog);letter-spacing:.2em;line-height:2}
+
+/* ── RESPONSIVE ── */
+@media(max-width:860px){
+  :root{--cell-sz:48px}
+  .game-layout{grid-template-columns:1fr}
+  .gside{flex-direction:row;flex-wrap:wrap}
+  .gside>*{flex:1 1 190px}
+  .board-wrap{grid-row:1}
+}
+@media(max-width:480px){:root{--cell-sz:38px}}
+
+/* ── PARTICLES ── */
+@keyframes particle-float{
+  0%{opacity:.85;transform:translate(0,0) scale(1)}
+  100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(0)}
+}
+
+/* ════════════════════════════════════════════
+   VISUAL UPGRADE LAYER — CINEMATIC ADDITIONS
+════════════════════════════════════════════ */
+
+/* ── CUSTOM CURSOR ── (somente em dispositivos com mouse fino) */
+@media (hover: hover) and (pointer: fine){
+  *{cursor:none!important}
+}
+@media not all and (hover: hover){
+  #cursor,#cursor-dot{display:none}
+}
+#cursor{
+  position:fixed;width:18px;height:18px;border-radius:50%;
+  border:2px solid var(--gold);
+  pointer-events:none;z-index:99999;
+  transform:translate(-50%,-50%);
+  transition:border-color .12s,width .12s,height .12s,opacity .12s,box-shadow .12s;
+  mix-blend-mode:screen;
+  box-shadow:0 0 8px var(--gold3),inset 0 0 4px rgba(255,215,0,.2);
+}
+#cursor-dot{
+  position:fixed;width:4px;height:4px;border-radius:50%;
+  background:var(--gold);pointer-events:none;z-index:99999;
+  transform:translate(-50%,-50%);
+  box-shadow:0 0 6px var(--gold);
+}
+#cursor.cursor-hover{width:30px;height:30px;border-color:#fff;box-shadow:0 0 16px var(--gold),0 0 32px rgba(255,215,0,.3)}
+#cursor.cursor-click{width:10px;height:10px;opacity:.5}
+
+/* ── CYBER BACKGROUND CANVAS ── */
+#cyber-bg{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+#particle-canvas{position:absolute;inset:0;width:100%;height:100%}
+.scan-line{
+  position:fixed;left:0;right:0;height:2px;pointer-events:none;z-index:1;
+  background:linear-gradient(90deg,transparent,rgba(255,215,0,.04),rgba(255,255,255,.03),rgba(255,215,0,.04),transparent);
+  animation:scan-move 10s linear infinite;
+}
+@keyframes scan-move{from{top:-2px}to{top:100vh}}
+
+/* ── CORNER DECORATIONS ── */
+.corner-deco{position:fixed;width:44px;height:44px;pointer-events:none;z-index:200}
+.corner-deco::before,.corner-deco::after{content:'';position:absolute;background:var(--gold3);opacity:.5}
+.corner-deco::before{width:100%;height:1px;top:0;left:0}
+.corner-deco::after{width:1px;height:100%;top:0;left:0}
+.corner-deco.tl{top:14px;left:14px}
+.corner-deco.tr{top:14px;right:14px;transform:scaleX(-1)}
+.corner-deco.bl{bottom:14px;left:14px;transform:scaleY(-1)}
+.corner-deco.br{bottom:14px;right:14px;transform:scale(-1)}
+
+/* mute button removed */
+
+/* ── HUD AMBIENT TEXT ── */
+.hud-ambient{
+  position:fixed;top:58px;right:18px;z-index:150;
+  font-family:'JetBrains Mono',monospace;font-size:.4rem;
+  color:rgba(255,215,0,.14);letter-spacing:.12em;line-height:2.2;
+  pointer-events:none;text-align:right;
+}
+
+/* ── TURN FLASH INDICATOR ── */
+@keyframes turn-flash{
+  0%{opacity:0;transform:scaleX(0)}
+  40%{opacity:1;transform:scaleX(1)}
+  100%{opacity:0;transform:scaleX(1)}
+}
+#turn-indicator{
+  position:fixed;top:0;left:0;right:0;height:2px;z-index:300;
+  pointer-events:none;transform-origin:left;opacity:0;
+}
+#turn-indicator.flash-p1{background:var(--gold);animation:turn-flash .55s ease-out forwards}
+#turn-indicator.flash-p2{background:var(--silver);animation:turn-flash .55s ease-out forwards}
+
+/* ── AI THINKING BOARD GLOW ── */
+.board-frame.ai-thinking{
+  animation:ai-pulse .65s ease-in-out infinite alternate;
+}
+@keyframes ai-pulse{
+  from{box-shadow:0 0 0 rgba(200,210,234,.0)}
+  to{box-shadow:0 0 30px rgba(200,210,234,.18),0 0 60px rgba(200,210,234,.06)}
+}
+
+/* ── PIECE GLOW PULSE ── */
+.piece-p1{animation:glow-p1 2.2s ease-in-out infinite}
+.piece-p2{animation:glow-p2 2.2s ease-in-out infinite}
+@keyframes glow-p1{
+  0%,100%{box-shadow:0 0 8px rgba(255,215,0,.5),0 0 18px rgba(255,215,0,.2)}
+  50%{box-shadow:0 0 22px rgba(255,215,0,.95),0 0 44px rgba(255,215,0,.4),0 0 70px rgba(255,215,0,.12)}
+}
+@keyframes glow-p2{
+  0%,100%{box-shadow:0 0 8px rgba(208,220,234,.4),0 0 16px rgba(208,220,234,.18)}
+  50%{box-shadow:0 0 22px rgba(208,220,234,.85),0 0 44px rgba(208,220,234,.32),0 0 70px rgba(208,220,234,.1)}
+}
+
+/* ── VALID CELLS BREATHING ── */
+.c-valid{animation:valid-breathe 1.1s ease-in-out infinite!important}
+@keyframes valid-breathe{
+  0%,100%{box-shadow:inset 0 0 8px rgba(255,215,0,.12),0 0 6px rgba(255,215,0,.18)}
+  50%{box-shadow:inset 0 0 20px rgba(255,215,0,.28),0 0 16px rgba(255,215,0,.38)}
+}
+
+/* ── BLOCK PICK PULSE ── */
+.c-block-pick{animation:block-breathe .9s ease-in-out infinite!important}
+@keyframes block-breathe{
+  0%,100%{box-shadow:inset 0 0 8px rgba(232,80,60,.12)}
+  50%{box-shadow:inset 0 0 20px rgba(232,80,60,.32),0 0 12px rgba(232,80,60,.22)}
+}
+
+/* ── SCREEN SHAKE ── */
+@keyframes shake{
+  0%,100%{transform:translate(0,0) rotate(0)}
+  10%{transform:translate(-4px,-2px) rotate(-.4deg)}
+  25%{transform:translate(4px,2px) rotate(.4deg)}
+  40%{transform:translate(-3px,2px) rotate(-.25deg)}
+  55%{transform:translate(3px,-1px) rotate(.25deg)}
+  70%{transform:translate(-2px,1px)}
+  85%{transform:translate(1px,-1px)}
+}
+.screen-shake{animation:shake .4s ease-out}
+
+/* ── WIN FLASH ── */
+@keyframes win-bg-flash{
+  0%{background:rgba(255,215,0,.18)}
+  100%{background:rgba(7,8,13,.92)}
+}
+#woverlay.show{animation:win-bg-flash .4s ease-out}
+
+/* ── GLASSMORPHISM PANEL UPGRADE ── */
+.gpanel,.pcard{
+  backdrop-filter:blur(4px);
+}
+
+/* ── BOARD METALLIC DEPTH ── */
+.board-frame{
+  box-shadow:
+    0 0 0 1px rgba(255,215,0,.12),
+    0 8px 40px rgba(0,0,0,.7),
+    0 0 80px rgba(255,215,0,.04),
+    inset 0 0 30px rgba(0,0,0,.4);
+}
+
+/* ── AI THINKING COUNTER ── */
+.ai-think-row{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 0;border-top:1px solid rgba(42,45,58,.7);
+}
+.ai-think-label{
+  font-family:'Black Ops One',sans-serif;
+  font-size:.44rem;letter-spacing:.3em;color:var(--fog);text-transform:uppercase;flex:1;
+}
+.ai-think-timer{
+  font-family:'JetBrains Mono',monospace;
+  font-size:.72rem;letter-spacing:.05em;
+  background:linear-gradient(135deg,var(--gold3),var(--gold));
+  -webkit-background-clip:text;color:transparent;
+  min-width:54px;text-align:right;
+  transition:opacity .1s;
+}
+.ai-think-timer.idle{
+  background:linear-gradient(135deg,var(--silver2),var(--chrome));
+  -webkit-background-clip:text;color:transparent;
+}
+/* pulsing dot next to thinking label */
+.ai-think-dot{
+  width:6px;height:6px;border-radius:50%;background:var(--gold3);flex-shrink:0;
+  animation:tdot 1s ease-in-out infinite;
+}
+.ai-think-dot.idle{background:var(--fog);animation:none;}
+@keyframes tdot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.25;transform:scale(.5)}}
+
+/* scanline effect inside board when thinking */
+.board-frame.ai-thinking::after{
+  content:'';position:absolute;inset:0;border-radius:8px;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(200,210,234,.018) 3px,rgba(200,210,234,.018) 4px);
+  animation:scanlines .8s linear infinite;
+  z-index:10;
+}
+@keyframes scanlines{from{background-position:0 0}to{background-position:0 4px}}
+
+/* rules-grid: sempre 5 colunas em uma linha única */
+.section{text-align:center}
+.rules-grid{justify-items:center}
+
+/* ═══════════════════════════════════
+   DESIGN UPGRADES
+═══════════════════════════════════ */
+
+/* ── Scoreboard de série ── */
+.scoreboard{
+  display:flex;align-items:stretch;
+  max-width:360px;margin:0 auto 18px;
+  background:var(--ink2);
+  border:1px solid var(--seam);
+  border-radius:4px;overflow:hidden;
+  position:relative;
+}
+.scoreboard::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--gold3),transparent);
+  opacity:.5;
+}
+.sb-side{
+  flex:1;padding:12px 16px;text-align:center;
+  transition:background .3s;
+}
+.sb-side.active-p1{background:rgba(255,215,0,.04)}
+.sb-side.active-p2{background:rgba(200,210,234,.03)}
+.sb-name{
+  font-family:'JetBrains Mono',monospace;
+  font-size:.44rem;letter-spacing:.2em;color:var(--fog);
+  text-transform:uppercase;margin-bottom:4px;
+}
+.sb-score{
+  font-family:'Black Ops One',sans-serif;
+  font-size:2rem;line-height:1;
+  transition:transform .3s cubic-bezier(.34,1.56,.64,1);
+}
+.sb-score.bump{transform:scale(1.5)}
+.sb-side.sb-p1 .sb-score{color:var(--gold)}
+.sb-side.sb-p2 .sb-score{color:var(--silver)}
+.sb-sep{
+  width:1px;background:var(--seam);
+  display:flex;align-items:center;justify-content:center;
+}
+.sb-vs{
+  font-family:'Black Ops One',sans-serif;
+  font-size:.46rem;letter-spacing:.12em;color:var(--fog);
+  padding:0 8px;
+}
+
+/* ── Author badge no hero ── */
+.hero-author{
+  font-family:'JetBrains Mono',monospace;
+  font-size:.5rem;letter-spacing:.32em;color:var(--fog);
+  margin-top:4px;text-transform:uppercase;
+}
+.hero-author strong{color:var(--gold3)}
+
+/* ── Footer upgrade ── */
+footer{
+  background:var(--ink2);
+  position:relative;overflow:hidden;
+}
+footer::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--gold3),var(--gold),var(--gold3),transparent);
+  opacity:.4;
+}
+.footer-author{
+  font-family:'Black Ops One',sans-serif;
+  font-size:.68rem;letter-spacing:.35em;
+  color:var(--gold3);margin-bottom:8px;
+  text-transform:uppercase;
+}
+
+/* ── Win overlay: mostrar turnos jogados ── */
+.win-turns{
+  font-family:'JetBrains Mono',monospace;
+  font-size:.55rem;letter-spacing:.2em;
+  color:var(--fog);margin-bottom:28px;
+}
+
+/* ── Botões de controle: hover mais vivo ── */
+.gctrl{transition:background .18s,border-color .18s,box-shadow .18s,transform .1s}
+.gctrl:hover{transform:translateY(-1px)}
+.gctrl.primary:hover{box-shadow:0 0 14px rgba(255,215,0,.2)}
+.gctrl.danger:hover{box-shadow:0 0 14px rgba(200,60,60,.2)}
+
+/* ── pcard: linha separadora autor ── */
+.pcard-author{
+  font-family:'JetBrains Mono',monospace;
+  font-size:.4rem;letter-spacing:.22em;
+  color:var(--fog);margin-top:1px;
+  text-transform:uppercase;
+}
+</style>
+</head>
+<body>
+<div id="cx-turnbar"></div>
+
+<!-- CURSOR -->
+<div id="cursor"></div>
+<div id="cursor-dot"></div>
+
+<!-- CYBER BG -->
+<div id="cyber-bg">
+  <canvas id="particle-canvas"></canvas>
+  <div class="scan-line"></div>
+</div>
+
+<!-- CORNER DECORATIONS -->
+<div class="corner-deco tl"></div>
+<div class="corner-deco tr"></div>
+<div class="corner-deco bl"></div>
+<div class="corner-deco br"></div>
+
+<!-- TURN FLASH -->
+<div id="turn-indicator"></div>
+
+<!-- HUD AMBIENT -->
+<div class="hud-ambient" id="hud-ambient">
+  <span id="hud-sys">SYS · ONLINE</span>
+  <span id="hud-alg">ALG · α-β</span>
+  <span id="hud-ply">PLY · 2</span>
+  <span id="hud-nodes">NDS · 0</span>
+  <span id="hud-time" style="color:rgba(255,215,0,.08)">ISOLATION v3.0</span>
+</div>
+
+<!-- LOADER -->
+<div id="loader">
+  <div class="loader-logo">ISOLATION</div>
+  <div><div class="lbar-wrap"><div class="lbar" id="lbar"></div></div></div>
+  <div class="lpct" id="lpct">FORJANDO METAIS... 0%</div>
+</div>
+
+<!-- HERO -->
+<section class="hero" id="top">
+  <div class="hero-bg"></div>
+  <div class="hero-eyebrow">Inteligência Artificial e Computacional · IFTM 2026</div>
+  <h1 class="hero-title">ISOLATION</h1>
+  <p class="hero-sub">Minimax · Poda Alfa-Beta · Agente Inteligente</p>
+  <p class="hero-author"><strong>Arthur Xavier</strong> · IFTM Patrocínio · 2026</p>
+  <div class="hero-badges">
+    <span class="hbadge hbadge-gold">Tabuleiro N×N</span>
+    <span class="hbadge hbadge-silver">Busca Competitiva</span>
+    <span class="hbadge hbadge-chrome">PLY Variável</span>
+  </div>
+  <div class="hero-cta">
+    <a href="#game-section" class="btn-metal btn-primary">JOGAR AGORA</a>
+    <a href="#how-section" class="btn-metal btn-outline">COMO JOGAR</a>
+  </div>
+  <div class="scroll-hint">
+    <div class="scroll-arrow"></div>
+    <span class="scroll-lbl">ROLE PARA BAIXO</span>
+  </div>
+</section>
+
+<div class="metal-divider"></div>
+
+<!-- HOW TO PLAY -->
+<div class="section reveal" id="how-section">
+  <div class="section-tag">Mecânicas</div>
+  <h2 class="section-title">Como Jogar</h2>
+  <p class="section-lead">Um duelo de isolamento estratégico. Mova seu peão, bloqueie o caminho — o primeiro a ficar sem movimento perde.</p>
+  <div class="rules-grid">
+    <div class="rule-card reveal"><div class="rule-num">01</div><div class="rule-title">Tabuleiro N×N</div><div class="rule-desc">O jogo ocorre em um tabuleiro quadrado (5×5, 7×7 ou 9×9). Cada jogador começa em lados opostos, peão no centro da coluna.</div></div>
+    <div class="rule-card reveal"><div class="rule-num">02</div><div class="rule-title">Movimento de Rei</div><div class="rule-desc">Seu peão se move como o rei do xadrez: exatamente 1 casa em qualquer direção — horizontal, vertical ou diagonal.</div></div>
+    <div class="rule-card reveal"><div class="rule-num">03</div><div class="rule-title">Bloqueio Manual</div><div class="rule-desc">Após mover, você escolhe qualquer casa vazia do tabuleiro para bloquear permanentemente. A IA também escolhe sua casa a bloquear.</div></div>
+    <div class="rule-card reveal"><div class="rule-num">04</div><div class="rule-title">Turnos Alternados</div><div class="rule-desc">Humano (ouro) e IA (prata) se alternam. Selecione seu peão e clique no destino iluminado. A IA pensa e joga automaticamente.</div></div>
+    <div class="rule-card reveal"><div class="rule-num">05</div><div class="rule-title">Vitória por Isolamento</div><div class="rule-desc">O jogador que não conseguir mover perde. Isole o adversário cortando todas as rotas de fuga.</div></div>
+  </div>
+</div>
+
+<div class="metal-divider"></div>
+
+<!-- GAME -->
+<section id="game-section">
+  <div class="game-header reveal">
+    <div class="section-tag" style="justify-content:center">Arena</div>
+    <h2 class="section-title" style="text-align:center">Campo de Batalha</h2>
+  </div>
+
+  <div style="max-width:1000px;margin:0 auto 12px;padding:0 20px">
+    <div class="gstatus s-p1" id="gstatus" role="status" aria-live="polite" aria-atomic="true">
+      <div class="sdot" style="background:var(--p1)" aria-hidden="true"></div>
+      <span id="gstatus-txt">Selecione o peão PLAYER 1 para mover</span>
+      <span style="margin-left:auto;font-size:.56rem;color:var(--fog)" id="gstatus-turn">TURNO 1</span>
+    </div>
+  </div>
+
+  <!-- SCOREBOARD DE SÉRIE -->
+  <div class="scoreboard" style="padding:0 20px;margin-bottom:14px">
+    <div class="scoreboard" style="margin:0;max-width:none;width:100%">
+      <div class="sb-side sb-p1" id="sb-p1">
+        <div class="sb-name">PLAYER 1</div>
+        <div class="sb-score" id="sb-score-p1">0</div>
+      </div>
+      <div class="sb-sep"><span class="sb-vs">VS</span></div>
+      <div class="sb-side sb-p2" id="sb-p2">
+        <div class="sb-name">PLAYER 2</div>
+        <div class="sb-score" id="sb-score-p2">0</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="game-layout" style="padding:0 20px">
+    <!-- LEFT -->
+    <div class="gside">
+      <div class="pcard" id="pcard-p1">
+        <div class="pcard-inner">
+        <div class="pcard-name pcard-name-p1"><div class="pball pball-p1">①</div>PLAYER 1</div>
+        <div class="pcard-author">Arthur Xavier</div>
+        <div class="pstat"><span class="pstat-lbl">TIPO</span><span class="pstat-val p1c" id="ptype-p1">HUMANO</span></div>
+        <div class="pstat"><span class="pstat-lbl">MOVIMENTOS</span><span class="pstat-val good" id="pmov-p1">—</span></div>
+        <div class="pstat"><span class="pstat-lbl">VITÓRIAS</span><span class="pstat-val" id="pwin-p1">0</span></div>
+        </div>
+      </div>
+      <div class="gpanel">
+        <div class="gpanel-inner">
+        <div class="gpanel-title">Algoritmo</div>
+        <div class="btn-group">
+          <button class="gbutton" id="btn-mm" onclick="setAlgo('minimax',this)">MINIMAX <span style="opacity:.5;font-size:.44rem">puro</span></button>
+          <button class="gbutton sel-algo" id="btn-ab" onclick="setAlgo('alfabeta',this)">α-β PODA <span style="opacity:.5;font-size:.44rem">otimizado</span></button>
+        </div>
+        <div class="gpanel-title" style="margin-top:12px">Dificuldade</div>
+        <div class="btn-group">
+          <button class="gbutton" data-ply="1" onclick="setDiff(1,this)">FÁCIL <span style="opacity:.5">PLY 1</span></button>
+          <button class="gbutton sel-diff" data-ply="2" onclick="setDiff(2,this)">MÉDIO <span style="opacity:.5">PLY 2</span></button>
+          <button class="gbutton" data-ply="3" onclick="setDiff(3,this)">DIFÍCIL <span style="opacity:.5">PLY 3</span></button>
+        </div>
+        <div class="gpanel-title" style="margin-top:12px">Tabuleiro</div>
+        <div class="btn-group">
+          <button class="gbutton" data-sz="5" onclick="setSize(5,this)">PEQUENO <span style="opacity:.5">5×5</span></button>
+          <button class="gbutton sel-sz" data-sz="7" onclick="setSize(7,this)">MÉDIO <span style="opacity:.5">7×7</span></button>
+          <button class="gbutton" data-sz="9" onclick="setSize(9,this)">GRANDE <span style="opacity:.5">9×9</span></button>
+        </div>
+        <div class="gpanel-title" style="margin-top:12px">Modo</div>
+        <div class="btn-group">
+          <button class="gbutton" id="btn-avai" onclick="toggleAIvAI()">⚡ IA VS IA: OFF</button>
+          <button class="gbutton" id="btn-pvp" onclick="togglePvP()">👥 PVP: OFF</button>
+        </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CENTER -->
+    <div class="board-wrap">
+      <div class="board-frame"><div class="board-grid" id="board"></div></div>
+      <div class="gcontrols">
+        <button class="gctrl primary" onclick="resetGame()">↺ REINICIAR</button>
+        <button class="gctrl danger" onclick="undoMove()">← DESFAZER</button>
+      </div>
+      <div class="glog" id="glog"></div>
+      <div class="move-trail" id="trail"></div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="gside">
+      <div class="pcard" id="pcard-p2">
+        <div class="pcard-inner">
+        <div class="pcard-name pcard-name-p2"><div class="pball pball-p2">②</div>PLAYER 2</div>
+        <div class="pstat"><span class="pstat-lbl">TIPO</span><span class="pstat-val p2c" id="ptype-p2">IA</span></div>
+        <div class="pstat"><span class="pstat-lbl">MOVIMENTOS</span><span class="pstat-val good" id="pmov-p2">—</span></div>
+        <div class="pstat"><span class="pstat-lbl">TEMPO · ÚLT.</span><span class="pstat-val" id="p2-last-ms">—</span></div>
+        <div class="pstat"><span class="pstat-lbl">NÓS · ÚLT.</span><span class="pstat-val" id="p2-last-nodes">—</span></div>
+        <div class="pstat"><span class="pstat-lbl">VITÓRIAS</span><span class="pstat-val" id="pwin-p2">0</span></div>
+        </div>
+      </div>
+      <div class="gpanel">
+        <div class="gpanel-inner">
+        <div class="gpanel-title">Performance IA · <span id="perf-alg-lbl" style="color:var(--gold)">α-β PODA</span></div>
+        <div class="pbar-wrap">
+          <div class="pbar-lbl"><span id="perf-bar-lbl">α-β PODA</span><span id="pb-active-val">—</span></div>
+          <div class="pbar-bg"><div class="pbar-fill" id="pb-active" style="width:0%;background:linear-gradient(90deg,var(--silver2),var(--chrome))"></div></div>
+        </div>
+        <!-- refs internos usados pelo HUD ambient e setAlgo -->
+        <span id="stat-nodes" style="display:none">0</span>
+        <span id="stat-prune" style="display:none">—</span>
+        <div class="ai-think-row">
+          <div class="ai-think-dot idle" id="think-dot"></div>
+          <span class="ai-think-label" id="think-label">AGUARDANDO</span>
+          <span class="ai-think-timer idle" id="think-timer">—</span>
+        </div>
+        <div class="pstat">
+          <span class="pstat-lbl">ÚLTIMA DECISÃO</span>
+          <span class="pstat-val" id="last-decision-val">—</span>
+        </div>
+        <div class="pstat"><span class="pstat-lbl">TURNO</span><span class="pstat-val" id="stat-turn2">1</span></div>
+        </div>
+      </div>
+      <!-- HEURÍSTICA DEBUG PANEL — oculto por padrão, toggle por clique -->
+      <div class="gpanel">
+        <div class="gpanel-inner">
+        <div class="gpanel-title" id="heu-toggle-btn" onclick="toggleHeuPanel()" style="cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between">
+          <span>Heurística Ativa</span>
+          <span id="heu-toggle-icon" style="font-size:.6rem;color:var(--fog);letter-spacing:.1em;font-family:'JetBrains Mono',monospace">+ EXIBIR</span>
+        </div>
+        <div id="heu-debug" style="display:none;flex-direction:column;gap:3px;margin-top:4px">
+          <div class="heu-bar-row" id="hbar-lib"><span class="hbar-lbl">LIB.REL</span><div class="hbar-bg"><div class="hbar-fill" id="hfill-lib" style="background:linear-gradient(90deg,#c8860a,#ffd700)"></div></div><span class="hbar-val" id="hval-lib">—</span></div>
+          <div class="heu-bar-row" id="hbar-mob"><span class="hbar-lbl">MOBIL.</span><div class="hbar-bg"><div class="hbar-fill" id="hfill-mob" style="background:linear-gradient(90deg,#3a5070,#6090c8)"></div></div><span class="hbar-val" id="hval-mob">—</span></div>
+          <div class="heu-bar-row" id="hbar-cen"><span class="hbar-lbl">CENTR.</span><div class="hbar-bg"><div class="hbar-fill" id="hfill-cen" style="background:linear-gradient(90deg,#2a4a2a,#44cc44)"></div></div><span class="hbar-val" id="hval-cen">—</span></div>
+          <div class="heu-bar-row" id="hbar-trp"><span class="hbar-lbl">TRAP</span><div class="hbar-bg"><div class="hbar-fill" id="hfill-trp" style="background:linear-gradient(90deg,#4a2a00,#cc7700)"></div></div><span class="hbar-val" id="hval-trp">—</span></div>
+          <div class="heu-bar-row" id="hbar-iso"><span class="hbar-lbl">ISOLAM.</span><div class="hbar-bg"><div class="hbar-fill" id="hfill-iso" style="background:linear-gradient(90deg,#4a1010,#cc3333)"></div></div><span class="hbar-val" id="hval-iso">—</span></div>
+          <div class="pstat" style="margin-top:6px"><span class="pstat-lbl">FATOR DOM.</span><span class="pstat-val good" id="stat-dom-factor">—</span></div>
+        </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WIN OVERLAY -->
+<div class="win-overlay" id="woverlay">
+  <div class="win-card">
+    <div class="win-label">ISOLAMENTO COMPLETO</div>
+    <div class="win-name wp1" id="wname">PLAYER 1</div>
+    <div class="win-sub">VITÓRIA POR ISOLAMENTO</div>
+    <div class="win-turns" id="win-turns">— turnos disputados</div>
+    <button class="btn-metal btn-primary" style="width:100%;position:relative;z-index:1;border-radius:0;clip-path:polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));letter-spacing:.25em" onclick="closeWin()">↺ NOVA PARTIDA</button>
+  </div>
+</div>
+
+
+<footer>
+  <div class="footer-logo">ISOLATION</div>
+  <div class="footer-author">Arthur Xavier</div>
+  <div class="footer-meta">
+    INTELIGÊNCIA ARTIFICIAL E COMPUTACIONAL · IFTM CAMPUS PATROCÍNIO · 2026<br>
+    Profa. Dra. Danielli Araújo Lima · Análise e Desenvolvimento de Sistemas · 6º Período<br>
+    Minimax · Poda Alfa-Beta · Heurística de Liberdade Relativa
+  </div>
+</footer>
+
+
+<script>
+/* ═══════════════════════
+   LOADER
+═══════════════════════ */
+(function(){
+  const msgs=['AQUECENDO O FORNO...','FORJANDO METAIS...','CALIBRANDO IA...','INICIALIZANDO TABULEIRO...','PRONTO!'];
+  let pct=0;
+  const bar=document.getElementById('lbar');
+  const pctEl=document.getElementById('lpct');
+  const iv=setInterval(()=>{
+    pct+=Math.random()*18+5;
+    if(pct>=100){pct=100;clearInterval(iv);setTimeout(()=>document.getElementById('loader').classList.add('gone'),400);}
+    bar.style.width=pct+'%';
+    pctEl.textContent=msgs[Math.min(Math.floor(pct/25),msgs.length-1)]+' '+Math.floor(pct)+'%';
+  },80);
+})();
+
+/* ═══════════════════════
+   SCROLL REVEAL
+═══════════════════════ */
+const observer=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');});
+},{threshold:.08});
+document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
+
+/* ═══════════════════════
+   CONSTANTS
+═══════════════════════ */
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  REPRESENTAÇÃO DO TABULEIRO                                  ║
+// ║  O tabuleiro é uma matriz ROWS×COLS onde cada célula vale:   ║
+// ║    0 (EMPTY)   → casa livre                                  ║
+// ║    1 (BLOCKED) → casa permanentemente bloqueada              ║
+// ║    2 (P1)      → posição do jogador humano (ouro)            ║
+// ║    3 (P2)      → posição da IA (prata)                       ║
+// ╚══════════════════════════════════════════════════════════════╝
+const EMPTY=0, BLOCKED=1, P1=2, P2=3;
+
+/* ═══════════════════════════════════════════════════════════════
+   ESTADO DO JOGO — todas as variáveis que descrevem o que está
+   acontecendo na partida em determinado momento.
+
+   Pense nisso como a "memória" do jogo: tudo que o código precisa
+   saber para saber ONDE estão as peças, DE QUEM é a vez, QUANTAS
+   jogadas já aconteceram e QUAL algoritmo está sendo usado.
+═══════════════════════════════════════════════════════════════ */
+let ROWS=7, COLS=7;              // tamanho atual do tabuleiro (7×7 padrão)
+let board=[];                    // a matriz do tabuleiro: board[linha][coluna] = 0,1,2 ou 3
+let posP1=[0,3], posP2=[6,3];    // onde cada peão está: [linha, coluna]
+let curTurn='p1';                // de quem é a vez: 'p1' = humano, 'p2' = IA
+let selCell=null;                // qual célula o humano clicou por último
+let validMoves=[];               // casas para onde o peão selecionado pode ir (iluminadas em amarelo)
+let history=[];                  // histórico de jogadas — usado pelo botão "desfazer"
+let turnCount=1;                 // contador de turnos desde o início da partida
+let wins={p1:0,p2:0};            // placar: quantas partidas cada jogador venceu
+let difficulty=2;                // PLY = quantas jogadas à frente a IA olha (1=fácil, 2=médio, 3=difícil)
+let algo='alfabeta';             // qual algoritmo a IA usa: 'minimax' ou 'alfabeta'
+let aiVsAI=false;                // true = ambos os lados são controlados pela IA
+let pvpMode=false;               // true = dois humanos jogando (sem IA)
+let aiTimer=null;                // referência ao setTimeout da jogada da IA (para poder cancelar no undo)
+let gameOver=false;              // true = a partida acabou, nenhum clique deve ser processado
+let nodesVisited=0;              // quantos nós o Minimax visitou neste turno (zera a cada turno)
+let abNodes=0, pruneCount=0;     // mesma contagem para o Alfa-Beta + quantas podas ele fez
+let lastAIms=null;               // tempo em ms que a IA levou na última jogada
+let totalNodesGame=0, totalPrunesGame=0; // total acumulado de nós e podas da partida inteira
+
+/* ── SISTEMA DE DUAS FASES POR TURNO ───────────────────────────
+   Cada turno tem DUAS etapas obrigatórias:
+     1. 'move'  → o jogador escolhe para onde mover seu peão
+     2. 'block' → o jogador escolhe uma casa qualquer para bloquear
+
+   A variável 'phase' controla em qual etapa o turno está.
+   Enquanto phase==='block', o tabuleiro ilumina as casas disponíveis
+   para bloqueio e ignora cliques no peão.
+────────────────────────────────────────────────────────────── */
+let phase='move';
+let blockCandidates=[]; // casas que podem ser bloqueadas na fase de bloqueio
+
+const METALS=[
+  'linear-gradient(135deg,#181a24,#0e1016)',
+  'linear-gradient(135deg,#1a1910,#12100a)',
+  'linear-gradient(135deg,#171a1e,#0c0e12)',
+  'linear-gradient(135deg,#191618,#101010)',
+  'linear-gradient(135deg,#16191a,#0e1010)',
+];
+let cellMetals=[];
+
+/* ═══════════════════════════════════════════════════════════════
+   INICIALIZAÇÃO DO TABULEIRO
+   ---------------------------------------------------------------
+   Cria o tabuleiro do zero: todas as casas vazias, peões nas
+   posições iniciais (centro da primeira e última linha).
+
+   Imagine resetar um tabuleiro de xadrez para o início da partida
+   — é exatamente isso que esta função faz.
+═══════════════════════════════════════════════════════════════ */
+function initBoard(){
+  const mid=Math.floor(COLS/2); // coluna do meio do tabuleiro
+  posP1=[0,mid];          // humano começa no topo, coluna central
+  posP2=[ROWS-1,mid];     // IA começa na base, coluna central (lados opostos)
+  board=[];
+  for(let r=0;r<ROWS;r++){
+    board.push([]);
+    for(let c=0;c<COLS;c++) board[r].push(EMPTY); // todas as casas começam vazias (=0)
+  }
+  board[posP1[0]][posP1[1]]=P1; // marca a posição do humano na matriz
+  board[posP2[0]][posP2[1]]=P2; // marca a posição da IA na matriz
+  // Só regenera a textura das casas quando o tamanho mudou — assim o "skin"
+  // do tabuleiro permanece consistente entre partidas do mesmo tamanho.
+  if(cellMetals.length!==ROWS || (cellMetals[0]&&cellMetals[0].length!==COLS)){
+    cellMetals=[];
+    for(let r=0;r<ROWS;r++){
+      cellMetals.push([]);
+      for(let c=0;c<COLS;c++) cellMetals[r].push(METALS[Math.floor(Math.random()*METALS.length)]);
+    }
+  }
+  phase='move';       // sempre começa na fase de movimento
+  selCell=null;
+  validMoves=[];
+  blockCandidates=[];
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MOVIMENTOS VÁLIDOS — estilo Rei do xadrez (1 passo)
+   ---------------------------------------------------------------
+   Recebe a posição atual (r, c) e retorna todas as casas
+   adjacentes que estão VAZIAS (não bloqueadas e não ocupadas).
+
+   As 8 direções possíveis cobrem: cima, baixo, esquerda, direita
+   e as 4 diagonais — igual ao movimento do rei no xadrez.
+
+   A checagem  board[nr][nc]===EMPTY  garante que o peão não pode
+   ir para uma casa bloqueada nem para onde o adversário está.
+═══════════════════════════════════════════════════════════════ */
+function getValidMoves(r,c){
+  // as 8 direções: [delta_linha, delta_coluna]
+  const dirs=[[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[-1,1],[1,-1],[1,1]];
+  const moves=[];
+  for(const [dr,dc] of dirs){
+    const nr=r+dr, nc=c+dc;
+    // verifica: dentro do tabuleiro E casa livre
+    if(nr>=0&&nr<ROWS&&nc>=0&&nc<COLS&&board[nr][nc]===EMPTY){
+      moves.push([nr,nc]);
+    }
+  }
+  // lista vazia = sem movimentos = derrota do jogador que chamou esta função.
+  // o algoritmo de busca usa isso para detectar o fim do jogo em simulação.
+  return moves;
+}
+
+/* Cells that can be blocked: all EMPTY cells (not occupied by either player) */
+function getBlockCandidates(){
+  /* Retorna TODAS as casas vazias — usada na fase de bloqueio do humano
+     e para exibir os candidatos visuais no tabuleiro. */
+  const cands=[];
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<COLS;c++){
+      if(board[r][c]===EMPTY) cands.push([r,c]);
+    }
+  }
+  return cands;
+}
+
+function getBlockCandidatesAI(aiPl){
+  /* Versão restrita para uso interno da IA (Minimax / Alfa-Beta).
+     O fator de ramificação de blocos domina o custo da busca:
+       b_total = movimentos × candidatos_de_bloco
+     Para evitar travamento em PLY 3+, o cap de candidatos é inversamente
+     proporcional à profundidade de busca configurada:
+       PLY 1 → até 10 candidatos
+       PLY 2 → até 6 candidatos
+       PLY 3+ → até 4 candidatos  (mantém busca < 2s no navegador)
+
+     Estratégia de seleção — em ordem de prioridade:
+       1. Casas adjacentes ao adversário (raio 1) — bloqueios táticos imediatos
+       2. Casas adjacentes à própria IA (raio 1) — proteger saídas próprias
+       3. Casas no raio 2 dos dois peões — contexto próximo
+     Os candidatos são ordenados por relevância antes do cap ser aplicado.
+
+     'aiPl' identifica quem é a IA atual (default 'p2'); necessário para que
+     o modo IA vs IA priorize corretamente em torno do adversário de CADA IA. */
+  const ai  = aiPl || 'p2';
+  const aiPos  = ai==='p1' ? posP1 : posP2;
+  const advPos = ai==='p1' ? posP2 : posP1;
+
+  const all=[];
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<COLS;c++){
+      if(board[r][c]===EMPTY) all.push([r,c]);
+    }
+  }
+  if(all.length===0) return [];
+
+  // Cap inversamente proporcional ao PLY — evita explosão combinatória
+  const cap = difficulty<=1 ? 10 : difficulty===2 ? 6 : 4;
+
+  // Prioriza candidatos por relevância estratégica
+  function chebyshev([r,c],[pr,pc]){ return Math.max(Math.abs(r-pr),Math.abs(c-pc)); }
+  const scored = all.map(cell=>{
+    const dAdv = chebyshev(cell, advPos); // distância ao adversário da IA
+    const dIA  = chebyshev(cell, aiPos);  // distância à própria IA
+    // Score: menor = mais relevante (prioriza casas perto do adversário)
+    const score = Math.min(dAdv, dIA) * 10 + dAdv;
+    return { cell, score };
+  });
+  scored.sort((a,b)=>a.score-b.score);
+
+  return scored.slice(0, cap).map(x=>x.cell);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FUNÇÕES DE MODIFICAÇÃO DO TABULEIRO
+   ---------------------------------------------------------------
+   Estas funções alteram a matriz board[] e as posições dos peões
+   diretamente, sem copiar o tabuleiro. Isso é chamado de
+   modificação "in-place" — mais rápido que criar cópias.
+
+   O Minimax e o Alfa-Beta usam essas funções para SIMULAR jogadas
+   durante a busca: aplicam a jogada, calculam o resultado, e depois
+   DESFAZEM usando o backtracking. É como jogar no "modo rascunho".
+═══════════════════════════════════════════════════════════════ */
+
+/* MOVER: desloca o peão de (fr,fc) para (tr,tc) na matriz.
+   Usada tanto para movimentos reais quanto para simulações dentro do Minimax/Alfa-Beta.
+   O backtracking é feito manualmente após cada chamada recursiva:
+   o algoritmo desfaz a jogada restaurando os valores originais de board[] e posP*.
+   Isso evita copiar o tabuleiro inteiro a cada nível — muito mais eficiente. */
+function applyMoveOnly(pl, fr, fc, tr, tc){
+  board[fr][fc]=EMPTY;           // casa de origem fica livre
+  const piece=pl==='p1'?P1:P2;
+  board[tr][tc]=piece;           // casa de destino recebe o peão
+  if(pl==='p1'){posP1=[tr,tc];}else{posP2=[tr,tc];} // registra nova posição
+}
+
+/* BLOQUEAR: marca uma casa como permanentemente bloqueada */
+function applyBlock(r, c){
+  board[r][c]=BLOCKED; // =1, nunca mais será EMPTY nesta partida
+}
+
+/* Obs.: o backtracking de move+block é feito inline dentro de minimax/alphabeta
+   (manipulando board[] e posP* diretamente), por isso não existe um helper
+   applyMoveAndBlock / undoMoveAndBlock aqui. */
+
+/* ═══════════════════════════════════════════════════════════════
+   RENDERIZAÇÃO DO TABULEIRO
+   ---------------------------------------------------------------
+   Redesenha o tabuleiro inteiro na tela com base no estado atual
+   da matriz board[][]. É chamada toda vez que algo muda.
+
+   Para cada célula, verifica seu estado e aplica a classe CSS
+   correspondente: bloqueada (preta), peão, casa válida (amarela),
+   casa de bloqueio, ou casa vazia.
+═══════════════════════════════════════════════════════════════ */
+function renderBoard(){
+  const COLS_LABELS=['A','B','C','D','E','F','G','H','I'];
+  const csz=ROWS<=5?76:ROWS<=7?62:48;
+  document.documentElement.style.setProperty('--cell-sz',csz+'px');
+
+  const el=document.getElementById('board');
+  el.style.gridTemplateColumns=`repeat(${COLS},var(--cell-sz))`;
+  el.innerHTML='';
+
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<COLS;c++){
+      const v=board[r][c];
+      const cell=document.createElement('div');
+      cell.className='cell';
+      cell.dataset.r=r; cell.dataset.c=c;
+
+      const coord=document.createElement('span');
+      coord.className='coord';
+      coord.textContent=COLS_LABELS[c]+(r+1);
+      cell.appendChild(coord);
+
+      const isValid=validMoves.some(([vr,vc])=>vr===r&&vc===c);
+      const isBlock=blockCandidates.some(([vr,vc])=>vr===r&&vc===c);
+      const isSel=selCell&&selCell[0]===r&&selCell[1]===c;
+
+      if(v===BLOCKED){
+        cell.classList.add('c-blocked');
+        const mark=document.createElement('div');
+        mark.className='block-mark';
+        mark.textContent='◼';
+        cell.appendChild(mark);
+      } else if(v===P1){
+        cell.classList.add('c-p1');
+        if(isSel) cell.classList.add('selected-p');
+        const p=document.createElement('div');
+        p.className='piece piece-p1';
+        cell.appendChild(p);
+        cell.addEventListener('click',()=>handleClick(r,c));
+      } else if(v===P2){
+        cell.classList.add('c-p2');
+        if(isSel) cell.classList.add('selected-p');
+        const p=document.createElement('div');
+        p.className='piece piece-p2';
+        cell.appendChild(p);
+        cell.addEventListener('click',()=>handleClick(r,c));
+      } else if(isValid){
+        // movement highlight (yellow)
+        cell.classList.add('c-valid');
+        cell.addEventListener('click',()=>handleClick(r,c));
+      } else if(isBlock){
+        // block highlight (red-ish)
+        cell.classList.add('c-block-pick');
+        cell.addEventListener('click',()=>handleClick(r,c));
+      } else {
+        cell.classList.add('c-empty');
+        cell.style.background=cellMetals[r][c];
+        cell.addEventListener('click',()=>handleClick(r,c));
+      }
+
+      el.appendChild(cell);
+    }
+  }
+
+  const p1m=getValidMoves(posP1[0],posP1[1]).length;
+  const p2m=getValidMoves(posP2[0],posP2[1]).length;
+  document.getElementById('pmov-p1').textContent=p1m;
+  document.getElementById('pmov-p2').textContent=p2m;
+  document.getElementById('stat-turn2').textContent=turnCount;
+
+  document.getElementById('pcard-p1').className='pcard'+(curTurn==='p1'?' active-p1':'');
+  document.getElementById('pcard-p2').className='pcard'+(curTurn==='p2'?' active-p2':'');
+
+  const trail=document.getElementById('trail');
+  const total=ROWS*COLS;
+  const p1h=history.filter(h=>h.pl==='p1').length;
+  const p2h=history.filter(h=>h.pl==='p2').length;
+  trail.innerHTML='';
+  for(let i=0;i<total;i++){
+    const d=document.createElement('div');
+    d.className='trail-dot'+(i<p1h?' tp1':i<p1h+p2h?' tp2':'');
+    trail.appendChild(d);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CLICK HANDLER — o que acontece quando o humano clica no tabuleiro
+   ---------------------------------------------------------------
+   Esta função é chamada sempre que o jogador clica em uma célula.
+   O comportamento depende da FASE atual do turno:
+
+   Fase MOVE:
+     - Clicou no próprio peão? → seleciona e mostra os movimentos válidos
+     - Clicou em uma casa iluminada? → executa o movimento e vai para fase BLOCK
+     - Clicou em outro lugar? → desmarca a seleção
+
+   Fase BLOCK:
+     - Clicou em uma casa disponível? → bloqueia, passa o turno para o adversário
+═══════════════════════════════════════════════════════════════ */
+function handleClick(r,c){
+  if(gameOver) return;
+
+  // Determine if this is an AI turn (not pvpMode and curTurn===p2, or aiVsAI)
+  const isAITurn = (!pvpMode && !aiVsAI && curTurn==='p2') || (aiVsAI);
+  if(isAITurn) return; // AI handles its own turns
+
+  const v=board[r][c];
+  const curPiece=curTurn==='p1'?P1:P2;
+  const curPos=curTurn==='p1'?posP1:posP2;
+
+  /* ── PHASE: MOVE ── */
+  if(phase==='move'){
+    if(v===curPiece){
+      selCell=[r,c];
+      validMoves=getValidMoves(curPos[0],curPos[1]);
+      renderBoard();
+      return;
+    }
+    if(validMoves.some(([vr,vc])=>vr===r&&vc===c)){
+      // Execute move
+      const fr=curPos[0], fc=curPos[1];
+      // Save snapshot before move
+      history.push({
+        pl:curTurn, fr, fc, tr:r, tc:c,
+        boardSnap:board.map(row=>[...row]),
+        p1Snap:[...posP1], p2Snap:[...posP2]
+      });
+      applyMoveOnly(curTurn, fr, fc, r, c);
+      selCell=null;
+      validMoves=[];
+      spawnParticles(r,c,curTurn);
+
+      // Transition to block phase — uma renderização só, já com candidatos
+      phase='block';
+      blockCandidates=getBlockCandidates();
+      renderBoard();
+
+      // Animação de entrada do peão na nova posição
+      const cells=document.getElementById('board').querySelectorAll('.cell');
+      const idx=r*COLS+c;
+      const pieceEl=cells[idx]?.querySelector('.piece');
+      if(pieceEl){pieceEl.classList.add('entering');setTimeout(()=>pieceEl.classList.remove('entering'),400);}
+
+      setStatus();
+      return;
+    }
+    // Deselect
+    selCell=null; validMoves=[];
+    renderBoard();
+    return;
+  }
+
+  /* ── PHASE: BLOCK ── */
+  if(phase==='block'){
+    if(blockCandidates.some(([vr,vc])=>vr===r&&vc===c)){
+      const COLS_L=['A','B','C','D','E','F','G','H','I'];
+      const last=history[history.length-1];
+      applyBlock(r,c);
+      // Update the last history entry to also record the block
+      last.blockR=r; last.blockC=c;
+      last.boardSnap=board.map(row=>[...row]); // re-snapshot after block
+      log(curTurn,`${curTurn==='p1'?'[P1]':'[P2]'} → ${COLS_L[last.tc]}${last.tr+1}  bloqueou ${COLS_L[c]}${r+1}`);
+
+      blockCandidates=[];
+      phase='move';
+
+      // Check if next player has moves
+      const next=curTurn==='p1'?'p2':'p1';
+      const nextPos=next==='p1'?posP1:posP2;
+      const nextMvs=getValidMoves(nextPos[0],nextPos[1]);
+      if(nextMvs.length===0){
+        triggerWin(curTurn);
+        return;
+      }
+
+      curTurn=next;
+      turnCount++;
+      renderBoard();
+      setStatus();
+
+      // Schedule AI if needed
+      if(!pvpMode && !aiVsAI && curTurn==='p2'){
+        aiTimer=setTimeout(()=>aiMove(),800);
+      }
+      if(aiVsAI){
+        aiTimer=setTimeout(()=>aiMove(),800);
+      }
+    }
+    return;
+  }
+}
+
+/* ═══════════════════════
+   STATUS BAR
+═══════════════════════ */
+function setStatus(msg){
+  const el=document.getElementById('gstatus');
+  const txt=document.getElementById('gstatus-txt');
+  const t=document.getElementById('gstatus-turn');
+  t.textContent=`TURNO ${turnCount}`;
+  if(msg){txt.textContent=msg;return;}
+
+  const name=curTurn==='p1'?'PLAYER 1':'PLAYER 2';
+  const isHuman=(pvpMode)||(curTurn==='p1'&&!aiVsAI);
+
+  if(aiVsAI){
+    el.className='gstatus s-think';
+    el.querySelector('.sdot').style.background='var(--gold3)';
+    txt.textContent=name+' calculando…';
+    return;
+  }
+
+  if(phase==='move'){
+    el.className=`gstatus s-${curTurn}`;
+    el.querySelector('.sdot').style.background=curTurn==='p1'?'var(--p1)':'var(--p2)';
+    if(isHuman){
+      txt.textContent=`${name}: selecione seu peão para mover`;
+    } else {
+      el.className='gstatus s-think';
+      el.querySelector('.sdot').style.background='var(--gold3)';
+      txt.textContent=`${name} calculando movimento…`;
+    }
+  } else {
+    // block phase
+    el.className=`gstatus s-${curTurn}`;
+    el.querySelector('.sdot').style.background=curTurn==='p1'?'var(--p1)':'var(--p2)';
+    txt.textContent=`${name}: escolha uma casa para BLOQUEAR`;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   HEURÍSTICA COMPOSTA PONDERADA — 5 fatores estratégicos
+   ---------------------------------------------------------------
+   H(s) = 0.55 * liberdadeRelativa   ← fator central e dominante
+         + 0.25 * mobilidade
+         + 0.10 * centralidade
+         + 0.07 * trapPotential
+         - 0.03 * autoIsolamento
+
+   Todos os fatores normalizados para [-1, +1] antes da ponderação,
+   garantindo que nenhum componente domine por escala numérica.
+   Trap e AutoIsolamento foram recentrados com (média - 0.5) * 2
+   para equiparar a escala da Liberdade Relativa e da Mobilidade.
+
+   A variável global lastHeuBreakdown guarda a contribuição de
+   cada fator na última chamada de nível raiz, usada pelo painel
+   de debug para exibir qual fator dominou a decisão da IA.
+═══════════════════════════════════════════════════════════════ */
+
+// Pesos de cada fator heurístico (somam 1.0 em valor absoluto)
+// Liberdade Relativa é o fator central — peso claramente maior.
+// Trap e AutoIsolamento reduzidos: antes retornavam [0,1] bruto
+// enquanto os demais retornavam [-1,+1], inflando sua contribuição real.
+const HEU_W = {
+  lib:  0.55,  // Liberdade Relativa — fator principal e dominante
+  mob:  0.25,  // Mobilidade imediata — complemento de 1 nível
+  cen:  0.10,  // Centralidade — fator de posicionamento
+  trap: 0.07,  // Trap Potential — reduzido: estava super-representado pela escala
+  iso:  0.03   // Penalidade de auto-isolamento — reduzida proporcionalmente
+};
+
+// Breakdown do último cálculo heurístico (para o painel de debug)
+let lastHeuBreakdown = {lib:0, mob:0, cen:0, trap:0, iso:0, total:0};
+
+/* ── Fator 1: Liberdade Relativa ─────────────────────────────
+   Para cada movimento possível do jogador, soma quantos movimentos
+   aquele destino ainda preserva. Avalia liberdade em 2 níveis,
+   não apenas o imediato — evita caminhos que parecem abertos mas
+   levam a becos sem saída no próximo turno.
+   Resultado: diferença entre IA e adversário (normalizado por 8*8).
+──────────────────────────────────────────────────────────────── */
+function _calcLiberdadeRelativa(aiMoves, opMoves){
+  // para cada casa onde a IA pode ir, conta quantos movimentos
+  // aquela posição ainda teria disponíveis no próximo turno.
+  // isso é "olhar dois níveis à frente" — diferente de mobilidade simples.
+  let aiLib = 0;
+  for(const [nr,nc] of aiMoves) aiLib += getValidMoves(nr,nc).length;
+
+  // mesmo cálculo para o adversário
+  let opLib = 0;
+  for(const [nr,nc] of opMoves) opLib += getValidMoves(nr,nc).length;
+
+  // subtrai: positivo = IA tem mais liberdade futura que o adversário.
+  // divide por 64 (8 movimentos × 8 liberdades) para normalizar em [-1, +1].
+  return (aiLib - opLib) / 64;
+}
+
+/* ── Fator 2: Mobilidade ─────────────────────────────────────
+   Conta o total de movimentos imediatos disponíveis para a IA
+   menos os do adversário. Diferente da Liberdade Relativa, olha
+   apenas 1 nível de profundidade — complementar ao fator 1.
+   Normalizado pelo número máximo de movimentos possíveis (8).
+──────────────────────────────────────────────────────────────── */
+function _calcMobilidade(aiMoves, opMoves){
+  return (aiMoves.length - opMoves.length) / 8;
+}
+
+/* ── Fator 3: Centralidade ───────────────────────────────────
+   Posições próximas ao centro oferecem mais rotas de fuga e
+   ângulos de bloqueio. Calcula a distância Chebyshev de cada
+   peão ao centro e penaliza bordas e cantos.
+   Normalizado: score ∈ [-1, 1], positivo favorece a IA.
+──────────────────────────────────────────────────────────────── */
+function _calcCentralidade(aiPos, opPos){
+  const cr = (ROWS - 1) / 2;
+  const cc = (COLS - 1) / 2;
+  const maxDist = Math.max(cr, cc); // distância máxima possível
+  // Distância Chebyshev: máximo entre Δrow e Δcol
+  const aiDist = Math.max(Math.abs(aiPos[0]-cr), Math.abs(aiPos[1]-cc));
+  const opDist = Math.max(Math.abs(opPos[0]-cr), Math.abs(opPos[1]-cc));
+  // IA mais central = score positivo
+  return (opDist - aiDist) / maxDist;
+}
+
+/* ── Fator 4: Trap Potential ─────────────────────────────────
+   Estima a capacidade de isolar o adversário nos próximos 2 turnos.
+   Para cada movimento do adversário, verifica quantos vizinhos
+   daquele destino estão bloqueados ou ocupados.
+
+   Correção de escala: recentrado em 0 → [-1, +1], igual aos demais.
+   Antes retornava [0,1] bruto, inflando sua contribuição real.
+   Fórmula: avg = (totalBlocked / movs) / 8 → (avg - 0.5) * 2
+──────────────────────────────────────────────────────────────── */
+function _calcTrapPotential(opMoves){
+  if(opMoves.length === 0) return 1;
+  let totalBlocked = 0;
+  for(const [nr,nc] of opMoves){
+    let blocked = 0;
+    for(const [dr,dc] of [[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[-1,1],[1,-1],[1,1]]){
+      const r2=nr+dr, c2=nc+dc;
+      if(r2<0||r2>=ROWS||c2<0||c2>=COLS) blocked++;
+      else if(board[r2][c2]===BLOCKED||board[r2][c2]===P1||board[r2][c2]===P2) blocked++;
+    }
+    totalBlocked += blocked;
+  }
+  const avg = (totalBlocked / opMoves.length) / 8;
+  return (avg - 0.5) * 2; // centrado em 0, ∈ [-1, +1]
+}
+
+/* ── Fator 5: Auto-Isolamento ────────────────────────────────
+   Penaliza posições em que os próprios destinos futuros já estão
+   apertados. Versão simétrica do Fator 4 para a IA.
+
+   Mesma correção de escala do F4: (avg - 0.5) * 2 → [-1, +1].
+   Um valor alto significa que os destinos da IA são muito fechados
+   — ruim, por isso é subtraído na fórmula principal.
+──────────────────────────────────────────────────────────────── */
+function _calcAutoIsolamento(aiMoves){
+  if(aiMoves.length === 0) return 1;
+  let totalBlocked = 0;
+  for(const [nr,nc] of aiMoves){
+    let blocked = 0;
+    for(const [dr,dc] of [[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[-1,1],[1,-1],[1,1]]){
+      const r2=nr+dr, c2=nc+dc;
+      if(r2<0||r2>=ROWS||c2<0||c2>=COLS) blocked++;
+      else if(board[r2][c2]===BLOCKED||board[r2][c2]===P1||board[r2][c2]===P2) blocked++;
+    }
+    totalBlocked += blocked;
+  }
+  const avg = (totalBlocked / aiMoves.length) / 8;
+  return (avg - 0.5) * 2; // centrado em 0, ∈ [-1, +1]
+}
+
+/* ── Função principal ─────────────────────────────────────── */
+function heuristic(aiPl, recordBreakdown=false){
+  // identifica quem é a IA e quem é o adversário nesta chamada
+  const opp = aiPl==='p1' ? 'p2' : 'p1';
+  const ap  = aiPl==='p1' ? posP1 : posP2; // posição da IA
+  const op  = opp==='p1'  ? posP1 : posP2; // posição do adversário
+
+  // lista de movimentos válidos de cada lado no estado atual
+  const aiMoves = getValidMoves(ap[0], ap[1]);
+  const opMoves = getValidMoves(op[0], op[1]);
+
+  // estados terminais: verificados ANTES de qualquer cálculo.
+  // os valores ±10000 são tão altos que a IA sempre vai preferir
+  // vencer (ou evitar perder) a ter qualquer ganho posicional.
+  if(opMoves.length === 0) return  10000;  // adversário sem saída → vitória da IA
+  if(aiMoves.length === 0) return -10000;  // IA sem saída → derrota
+
+  // calcula os 5 fatores, cada um retornando um valor entre -1 e +1
+  const f_lib  = _calcLiberdadeRelativa(aiMoves, opMoves); // F1: fator central (peso 0.55)
+  const f_mob  = _calcMobilidade(aiMoves, opMoves);         // F2: mobilidade imediata
+  const f_cen  = _calcCentralidade(ap, op);                 // F3: centralidade no tabuleiro
+  const f_trap = _calcTrapPotential(opMoves);               // F4: potencial de prender adversário
+  const f_iso  = _calcAutoIsolamento(aiMoves);              // F5: penalidade de auto-isolamento
+
+  // multiplica cada fator pelo seu peso e soma tudo
+  const c_lib  =  HEU_W.lib  * f_lib;  // +0.55 * f_lib
+  const c_mob  =  HEU_W.mob  * f_mob;  // +0.25 * f_mob
+  const c_cen  =  HEU_W.cen  * f_cen;  // +0.10 * f_cen
+  const c_trap =  HEU_W.trap * f_trap; // +0.07 * f_trap
+  const c_iso  = -HEU_W.iso  * f_iso;  // −0.03 * f_iso (sinal negativo: é penalidade)
+
+  const total = c_lib + c_mob + c_cen + c_trap + c_iso;
+  // 'total' fica entre -1 e +1 em situações normais
+
+  // guarda o breakdown para o painel de heurística na tela
+  if(recordBreakdown){
+    lastHeuBreakdown = { lib:c_lib, mob:c_mob, cen:c_cen, trap:c_trap, iso:c_iso, total };
+  }
+
+  // multiplica por 100 para coexistir na mesma escala dos terminais ±10000.
+  // resultado final: entre -100 e +100 para estados não-terminais.
+  return total * 100;
+}
+
+/* ── Atualiza o painel de debug com o último breakdown ─────── */
+function updateHeuPanel(){
+  const bd = lastHeuBreakdown;
+  const factors = [
+    {id:'lib',  val:bd.lib,  max:HEU_W.lib},
+    {id:'mob',  val:bd.mob,  max:HEU_W.mob},
+    {id:'cen',  val:bd.cen,  max:HEU_W.cen},
+    {id:'trap', val:bd.trap, max:HEU_W.trap},
+    {id:'iso',  val:bd.iso,  max:HEU_W.iso},
+  ];
+
+  let domFactor = '', domAbs = 0;
+  const NAMES = {lib:'LIB.REL', mob:'MOBIL.', cen:'CENTR.', trap:'TRAP', iso:'ISOLAM.'};
+
+  factors.forEach(({id, val, max}) => {
+    const fillEl  = document.getElementById('hfill-' + id);
+    const valEl   = document.getElementById('hval-'  + id);
+    if(!fillEl || !valEl) return;
+    // Largura proporcional à contribuição máxima possível deste fator
+    const pct = Math.min(Math.abs(val) / max * 100, 100);
+    fillEl.style.width = pct + '%';
+    valEl.textContent  = (val >= 0 ? '+' : '') + val.toFixed(2);
+    if(Math.abs(val) > domAbs){ domAbs = Math.abs(val); domFactor = id; }
+  });
+
+  const domEl = document.getElementById('stat-dom-factor');
+  if(domEl) domEl.textContent = domFactor ? NAMES[domFactor] : '—';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CONTROLE DE COMPLEXIDADE DA BUSCA
+   ---------------------------------------------------------------
+   Limites por dificuldade (nós máximos analisados por turno):
+     PLY 1 (Fácil)  →  500 nós
+     PLY 2 (Médio)  → 2000 nós
+     PLY 3 (Difícil)→ 6000 nós
+
+   Limite de tempo: 1200ms por decisão (evita travamentos).
+   Quando qualquer limite é atingido, a busca retorna a melhor
+   jogada parcial encontrada até aquele ponto.
+═══════════════════════════════════════════════════════════════ */
+// limites de nós por dificuldade:
+//   PLY 1 (Fácil)   →  500 estados — decisão rápida, menos inteligente
+//   PLY 2 (Médio)   → 2000 estados — equilíbrio entre velocidade e qualidade
+//   PLY 3 (Difícil) → 6000 estados — analisa mais, mas ainda dentro do orçamento
+const NODE_LIMITS = { 1: 500, 2: 2000, 3: 6000 };
+
+// tempo máximo por decisão: 1200ms (1,2 segundos).
+// quando atingido, a busca para e usa o melhor resultado parcial.
+const TIME_LIMIT_MS = 1200;
+
+// contexto da busca atual — compartilhado entre minimax/alphabeta e o orquestrador.
+// zerado no início de cada turno da IA.
+let _searchCtx = {
+  nodeLimit: 2000,
+  startTime: 0,
+  cutoff: false,   // true quando algum limite foi atingido durante a busca
+  reason: ''       // motivo do encerramento: 'nodes', 'time' ou 'depth'
+};
+
+/* ── Ordenação de movimentos ────────────────────────────────
+   Prioriza movimentos que, provadamente, levam a posições
+   melhores para o α-β poda cortar cedo e visitar menos nós.
+
+   Critérios (ordem decrescente de prioridade):
+   1. Movimentos que isolam imediatamente o adversário (+10000)
+   2. Movimentos centrais (menor distância Chebyshev ao centro)
+   3. Maior liberdade relativa após o movimento
+   4. Movimentos que constrangem o adversário
+────────────────────────────────────────────────────────────── */
+function orderMoves(moves, cur, aiPl){
+  const cr = (ROWS-1)/2, cc = (COLS-1)/2;
+  const opp = cur==='p1' ? 'p2' : 'p1';
+  const oppPos = opp==='p1' ? posP1 : posP2;
+
+  const scored = moves.map(([nr,nc],idx)=>{
+    // Heurística rápida de ordenação (não o heuristic() completo)
+    const centralityScore = -(Math.abs(nr-cr)+Math.abs(nc-cc));
+
+    // Simula brevemente o movimento para contar liberdade
+    const piece = cur==='p1' ? P1 : P2;
+    const oldR = cur==='p1' ? posP1[0] : posP2[0];
+    const oldC = cur==='p1' ? posP1[1] : posP2[1];
+    board[oldR][oldC]=EMPTY; board[nr][nc]=piece;
+    if(cur==='p1'){posP1=[nr,nc];}else{posP2=[nr,nc];}
+
+    const myLib = getValidMoves(nr,nc).length;
+    const oppLib = getValidMoves(oppPos[0],oppPos[1]).length;
+    const isolatesNow = (oppLib===0) ? 10000 : 0;
+
+    board[nr][nc]=EMPTY; board[oldR][oldC]=piece;
+    if(cur==='p1'){posP1=[oldR,oldC];}else{posP2=[oldR,oldC];}
+
+    const score = isolatesNow + myLib*3 - oppLib*2 + centralityScore*0.5;
+    return {move:[nr,nc], score, idx};
+  });
+
+  // ordena por score decrescente (mais promissores primeiro).
+  // tiebreak determinístico por coordenadas do destino:
+  // garante que a mesma posição sempre gera a mesma decisão.
+  // isso é importante para evitar loops infinitos no modo IA vs IA,
+  // onde as duas IAs poderiam entrar em ciclos de movimentos repetidos.
+  scored.sort((a,b)=>{
+    if(b.score !== a.score) return b.score - a.score; // score maior vem primeiro
+    if(a.move[0] !== b.move[0]) return a.move[0] - b.move[0]; // desempate por linha
+    if(a.move[1] !== b.move[1]) return a.move[1] - b.move[1]; // desempate por coluna
+    return a.idx - b.idx; // desempate final pelo índice original
+  });
+  return scored.map(x=>x.move);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ALGORITMO MINIMAX  (com profundidade limitada — ply)
+   com limitador de nós e cutoff por tempo
+═══════════════════════════════════════════════════════════════ */
+function minimax(depth, maximizing, aiPl){
+  // conta cada estado da árvore que a IA visitou neste turno
+  nodesVisited++;
+
+  // limite de tempo: a cada 64 nós verifica se o prazo de 1200ms foi atingido.
+  // se sim, encerra a busca e devolve a melhor jogada parcial encontrada até aqui.
+  // isso impede que o jogo trave no navegador em posições muito complexas.
+  if((nodesVisited & 63)===0 && (performance.now()-_searchCtx.startTime) >= TIME_LIMIT_MS){
+    if(!_searchCtx.cutoff){ _searchCtx.cutoff=true; _searchCtx.reason='time'; }
+    return heuristic(aiPl); // avalia o estado atual como melhor estimativa disponível
+  }
+
+  // 'cur' é de quem é a vez neste nível da árvore:
+  //   maximizing=true  → turno da IA (quer o maior score)
+  //   maximizing=false → turno do adversário (quer o menor score)
+  const cur=maximizing?aiPl:(aiPl==='p1'?'p2':'p1');
+  const cp=cur==='p1'?posP1:posP2;
+  const rawMoves=getValidMoves(cp[0],cp[1]);
+
+  // caso base da recursão: chegou ao limite de profundidade (depth=0)
+  // ou o jogador atual não tem movimentos → avalia pela heurística
+  if(depth===0||rawMoves.length===0) return heuristic(aiPl);
+
+  // Minimax puro: NÃO ordena os movimentos — testa na ordem natural.
+  // Diferença intencional em relação ao Alfa-Beta: o Minimax analisa
+  // TUDO independentemente da ordem, então ordenar não ajuda.
+  // Isso torna o Minimax mais lento, o que evidencia o ganho do Alfa-Beta.
+  const mvs = rawMoves;
+
+  if(maximizing){
+    // turno da IA: começa com o pior possível e sobe com o melhor encontrado
+    let best=-Infinity;
+    for(const [nr,nc] of mvs){
+      if(_searchCtx.cutoff) break; // interrompe se o tempo acabou
+      // FASE 1: simula o movimento do peão (sem copiar o tabuleiro)
+      applyMoveOnly(cur,cp[0],cp[1],nr,nc);
+      const cands=getBlockCandidatesAI(aiPl);
+      if(cands.length===0){
+        // sem candidatos de bloqueio: desce direto para o próximo nível
+        best=Math.max(best,minimax(depth-1,false,aiPl));
+      } else {
+        for(const [br,bc] of cands){
+          if(_searchCtx.cutoff) break;
+          // FASE 2: simula o bloqueio e avalia o estado resultante
+          applyBlock(br,bc);
+          best=Math.max(best,minimax(depth-1,false,aiPl));
+          // backtracking: desfaz o bloqueio para testar outra opção
+          board[br][bc]=EMPTY;
+        }
+      }
+      // backtracking: desfaz o movimento do peão — volta ao estado anterior
+      const piece=cur==='p1'?P1:P2;
+      board[nr][nc]=EMPTY; board[cp[0]][cp[1]]=piece;
+      if(cur==='p1'){posP1=[cp[0],cp[1]];}else{posP2=[cp[0],cp[1]];}
+    }
+    return best; // devolve o melhor score encontrado neste nível MAX
+  } else {
+    // turno do adversário: começa com o melhor possível e cai com o pior encontrado
+    let best=Infinity;
+    for(const [nr,nc] of mvs){
+      if(_searchCtx.cutoff) break;
+      applyMoveOnly(cur,cp[0],cp[1],nr,nc);
+      const cands=getBlockCandidatesAI(aiPl);
+      if(cands.length===0){
+        best=Math.min(best,minimax(depth-1,true,aiPl));
+      } else {
+        for(const [br,bc] of cands){
+          if(_searchCtx.cutoff) break;
+          applyBlock(br,bc);
+          best=Math.min(best,minimax(depth-1,true,aiPl));
+          board[br][bc]=EMPTY;
+        }
+      }
+      const piece=cur==='p1'?P1:P2;
+      board[nr][nc]=EMPTY; board[cp[0]][cp[1]]=piece;
+      if(cur==='p1'){posP1=[cp[0],cp[1]];}else{posP2=[cp[0],cp[1]];}
+    }
+    return best; // devolve o pior score para a IA (melhor para o adversário)
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ALGORITMO ALFA-BETA  (otimização do Minimax com poda)
+   com limitador de nós, cutoff por tempo e move ordering
+═══════════════════════════════════════════════════════════════ */
+function alphabeta(depth, alpha, beta, maximizing, aiPl){
+  // contador separado do Minimax — permite comparar diretamente
+  // quantos estados cada algoritmo visitou no mesmo turno
+  abNodes++;
+
+  // mesmo limite de tempo do Minimax (1200ms)
+  if((abNodes & 63)===0 && (performance.now()-_searchCtx.startTime) >= TIME_LIMIT_MS){
+    if(!_searchCtx.cutoff){ _searchCtx.cutoff=true; _searchCtx.reason='time'; }
+    return heuristic(aiPl);
+  }
+
+  const cur=maximizing?aiPl:(aiPl==='p1'?'p2':'p1');
+  const cp=cur==='p1'?posP1:posP2;
+  const rawMoves=getValidMoves(cp[0],cp[1]);
+
+  if(depth===0||rawMoves.length===0) return heuristic(aiPl);
+
+  // Move ordering: testa os movimentos mais promissores PRIMEIRO.
+  // Isso cria um valor alto de alpha logo no início, o que aumenta
+  // a chance de beta <= alpha nos ramos seguintes → mais podas.
+  // O Minimax não usa isso — diferença intencional para comparação.
+  const mvs = depth >= 2 ? orderMoves(rawMoves, cur, aiPl) : rawMoves;
+
+  if(maximizing){
+    // alpha = melhor score que a IA já garantiu em algum ramo analisado.
+    // começa em -Infinity: a IA ainda não garantiu nada.
+    let best=-Infinity;
+    for(const [nr,nc] of mvs){
+      if(_searchCtx.cutoff) break;
+      applyMoveOnly(cur,cp[0],cp[1],nr,nc);
+      const cands=getBlockCandidatesAI(aiPl);
+      if(cands.length===0){
+        const v=alphabeta(depth-1,alpha,beta,false,aiPl);
+        best=Math.max(best,v);
+        alpha=Math.max(alpha,best); // atualiza o melhor garantido pela IA
+        const piece=cur==='p1'?P1:P2;
+        board[nr][nc]=EMPTY; board[cp[0]][cp[1]]=piece;
+        if(cur==='p1'){posP1=[cp[0],cp[1]];}else{posP2=[cp[0],cp[1]];}
+        // PODA: o adversário (nível acima) já tem uma opção melhor que beta.
+        // Não importa o que este ramo contenha — ele nunca será escolhido.
+        if(beta<=alpha){pruneCount++;break;}
+      } else {
+        let doneOuter=false;
+        for(const [br,bc] of cands){
+          if(_searchCtx.cutoff){doneOuter=true;break;}
+          applyBlock(br,bc);
+          const v=alphabeta(depth-1,alpha,beta,false,aiPl);
+          board[br][bc]=EMPTY;
+          best=Math.max(best,v); alpha=Math.max(alpha,best);
+          if(beta<=alpha){pruneCount++;doneOuter=true;break;} // poda beta
+        }
+        const piece=cur==='p1'?P1:P2;
+        board[nr][nc]=EMPTY; board[cp[0]][cp[1]]=piece;
+        if(cur==='p1'){posP1=[cp[0],cp[1]];}else{posP2=[cp[0],cp[1]];}
+        if(doneOuter) break;
+      }
+    }
+    return best;
+  } else {
+    // beta = melhor score que o adversário já garantiu (quer minimizar).
+    // começa em +Infinity: o adversário ainda não garantiu nada.
+    let best=Infinity;
+    for(const [nr,nc] of mvs){
+      if(_searchCtx.cutoff) break;
+      applyMoveOnly(cur,cp[0],cp[1],nr,nc);
+      const cands=getBlockCandidatesAI(aiPl);
+      if(cands.length===0){
+        const v=alphabeta(depth-1,alpha,beta,true,aiPl);
+        best=Math.min(best,v);
+        beta=Math.min(beta,best); // atualiza o pior garantido pelo adversário
+        const piece=cur==='p1'?P1:P2;
+        board[nr][nc]=EMPTY; board[cp[0]][cp[1]]=piece;
+        if(cur==='p1'){posP1=[cp[0],cp[1]];}else{posP2=[cp[0],cp[1]];}
+        // PODA: a IA (nível acima) já tem garantido alpha, que é melhor
+        // do que o máximo que este ramo pode oferecer (beta). Corta.
+        if(beta<=alpha){pruneCount++;break;}
+      } else {
+        let doneOuter=false;
+        for(const [br,bc] of cands){
+          if(_searchCtx.cutoff){doneOuter=true;break;}
+          applyBlock(br,bc);
+          const v=alphabeta(depth-1,alpha,beta,true,aiPl);
+          board[br][bc]=EMPTY;
+          best=Math.min(best,v); beta=Math.min(beta,best);
+          if(beta<=alpha){pruneCount++;doneOuter=true;break;} // poda alpha
+        }
+        const piece=cur==='p1'?P1:P2;
+        board[nr][nc]=EMPTY; board[cp[0]][cp[1]]=piece;
+        if(cur==='p1'){posP1=[cp[0],cp[1]];}else{posP2=[cp[0],cp[1]];}
+        if(doneOuter) break;
+      }
+    }
+    return best;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ORQUESTRADOR DA IA — o "gerente" que decide o movimento da IA
+   ---------------------------------------------------------------
+   Imagine um gerente que, antes de tomar qualquer decisão, manda
+   DOIS consultores analisarem o mesmo problema ao mesmo tempo:
+     - Consultor 1: Minimax (analisa tudo, sem atalhos)
+     - Consultor 2: Alfa-Beta (analisa com atalhos inteligentes)
+
+   Os dois chegam à mesma conclusão, mas o Alfa-Beta chega mais
+   rápido. O gerente exibe os resultados dos dois no painel de
+   performance e executa a decisão do algoritmo que o usuário escolheu.
+
+   Para medir de forma JUSTA, a ordem de execução alterna a cada
+   turno (ímpar: MM primeiro; par: AB primeiro), eliminando o
+   viés de tempo causado pelo aquecimento do motor JavaScript (JIT).
+═══════════════════════════════════════════════════════════════ */
+function runMinimax(pl, mvs){
+  // Inicializa contexto de busca — limite apenas por tempo
+  _searchCtx = { nodeLimit: Infinity, startTime: performance.now(), cutoff: false, reason: 'depth' };
+  nodesVisited=0;
+
+  const orderedMvs = orderMoves(mvs, pl, pl); // ordena os movimentos raiz
+  let bestMove=null, bestBlock=null, bestSc=-Infinity;
+  const p=pl==='p1'?posP1:posP2;
+  const rootCap=difficulty<=1?12:difficulty===2?8:6;
+
+  for(const [nr,nc] of orderedMvs){
+    if(_searchCtx.cutoff && bestMove!==null) break; // cutoff — mantém melhor parcial
+    applyMoveOnly(pl,p[0],p[1],nr,nc);
+    const allCands=getBlockCandidatesAI(pl);
+    const cands=allCands.slice(0,rootCap);
+    if(cands.length===0){
+      const s=minimax(difficulty,false,pl);
+      if(s>bestSc){bestSc=s;bestMove=[nr,nc];bestBlock=null;}
+    } else {
+      for(const [br,bc] of cands){
+        applyBlock(br,bc);
+        const s=minimax(difficulty,false,pl);
+        board[br][bc]=EMPTY;
+        if(s>bestSc){bestSc=s;bestMove=[nr,nc];bestBlock=[br,bc];}
+        if(_searchCtx.cutoff && bestMove!==null) break;
+      }
+    }
+    const piece=pl==='p1'?P1:P2;
+    board[nr][nc]=EMPTY; board[p[0]][p[1]]=piece;
+    if(pl==='p1'){posP1=[p[0],p[1]];}else{posP2=[p[0],p[1]];}
+  }
+
+  const elapsed = (performance.now()-_searchCtx.startTime).toFixed(1);
+  // Log técnico apenas no console (não exibido na interface)
+  console.log(
+    `%c[MINIMAX] Turno ${turnCount} · PLY ${difficulty}`,
+    'color:#ffd700;font-weight:bold',
+    `\n  Nós analisados : ${nodesVisited}`,
+    `\n  Profundidade   : ${difficulty}`,
+    `\n  Tempo total    : ${elapsed}ms`,
+    `\n  Encerramento   : ${_searchCtx.reason}`
+  );
+  return {bestMove,bestBlock,nodes:nodesVisited,timeMs:elapsed};
+}
+
+function runAlphaBeta(pl, mvs){
+  // Inicializa contexto de busca — limite apenas por tempo
+  _searchCtx = { nodeLimit: Infinity, startTime: performance.now(), cutoff: false, reason: 'depth' };
+  abNodes=0; pruneCount=0;
+
+  const orderedMvs = orderMoves(mvs, pl, pl); // ordena movimentos raiz para maximizar podas
+  let bestMove=null, bestBlock=null, bestSc=-Infinity;
+  let alpha=-Infinity; // janela compartilhada entre movimentos raiz
+  const beta=Infinity;
+  const p=pl==='p1'?posP1:posP2;
+  const rootCap=difficulty<=1?12:difficulty===2?8:6;
+
+  for(const [nr,nc] of orderedMvs){
+    if(_searchCtx.cutoff && bestMove!==null) break;
+    applyMoveOnly(pl,p[0],p[1],nr,nc);
+    const allCands=getBlockCandidatesAI(pl);
+    const cands=allCands.slice(0,rootCap);
+    if(cands.length===0){
+      const s=alphabeta(difficulty,alpha,beta,false,pl);
+      if(s>bestSc){bestSc=s;bestMove=[nr,nc];bestBlock=null;}
+      alpha=Math.max(alpha,bestSc);
+    } else {
+      for(const [br,bc] of cands){
+        applyBlock(br,bc);
+        const s=alphabeta(difficulty,alpha,beta,false,pl);
+        board[br][bc]=EMPTY;
+        if(s>bestSc){bestSc=s;bestMove=[nr,nc];bestBlock=[br,bc];}
+        alpha=Math.max(alpha,bestSc);
+        if(beta<=alpha){pruneCount++;break;}
+        if(_searchCtx.cutoff && bestMove!==null) break;
+      }
+    }
+    const piece=pl==='p1'?P1:P2;
+    board[nr][nc]=EMPTY; board[p[0]][p[1]]=piece;
+    if(pl==='p1'){posP1=[p[0],p[1]];}else{posP2=[p[0],p[1]];}
+  }
+
+  const elapsed = (performance.now()-_searchCtx.startTime).toFixed(1);
+  // Log técnico apenas no console (não exibido na interface)
+  console.log(
+    `%c[ALFA-BETA] Turno ${turnCount} · PLY ${difficulty}`,
+    'color:#b0b8c8;font-weight:bold',
+    `\n  Nós analisados : ${abNodes}`,
+    `\n  Podas          : ${pruneCount}`,
+    `\n  Profundidade   : ${difficulty}`,
+    `\n  Tempo total    : ${elapsed}ms`,
+    `\n  Encerramento   : ${_searchCtx.reason}`
+  );
+  return {bestMove,bestBlock,nodes:abNodes,pruned:pruneCount,timeMs:elapsed};
+}
+
+/* ── Thinking timer state ── */
+let _thinkTimerIv = null;
+let _thinkStart   = 0;
+
+function _startThinkingUI(pl){
+  const dot   = document.getElementById('think-dot');
+  const label = document.getElementById('think-label');
+  const timer = document.getElementById('think-timer');
+  const bf    = document.getElementById('board-frame') || document.querySelector('.board-frame');
+  if(dot)   { dot.classList.remove('idle'); }
+  if(label) { label.textContent = pl==='p1'?'P1 PENSANDO':'IA PENSANDO'; }
+  if(timer) { timer.classList.remove('idle'); timer.textContent = '0ms'; }
+  if(bf)    { bf.classList.add('ai-thinking'); }
+
+  _thinkStart = performance.now();
+  _thinkTimerIv = setInterval(()=>{
+    const ms = Math.round(performance.now() - _thinkStart);
+    if(timer) timer.textContent = ms + 'ms';
+  }, 50);
+}
+
+function _stopThinkingUI(elapsedMs, nodes){
+  if(_thinkTimerIv){ clearInterval(_thinkTimerIv); _thinkTimerIv=null; }
+  const dot   = document.getElementById('think-dot');
+  const label = document.getElementById('think-label');
+  const timer = document.getElementById('think-timer');
+  const last  = document.getElementById('last-decision-val');
+  const p2ms  = document.getElementById('p2-last-ms');
+  const p2nds = document.getElementById('p2-last-nodes');
+  const bf    = document.querySelector('.board-frame');
+  if(dot)   { dot.classList.add('idle'); }
+  if(label) { label.textContent = 'AGUARDANDO'; }
+  if(timer) { timer.classList.add('idle'); timer.textContent = elapsedMs+'ms'; }
+  if(last)  { last.textContent  = elapsedMs+'ms'; }
+  if(p2ms)  { p2ms.textContent  = elapsedMs+'ms'; }
+  if(p2nds) { p2nds.textContent = (nodes !== undefined ? nodes : '—'); }
+  if(bf)    { bf.classList.remove('ai-thinking'); }
+}
+
+let _aiRunning = false; // guarda contra execuções simultâneas de aiMove
+
+function aiMove(){
+  if(gameOver) return;
+  if(_aiRunning) return; // já está calculando — ignora chamada duplicada
+  _aiRunning = true;
+  const pl=curTurn;
+  const p=pl==='p1'?posP1:posP2;
+  const mvs=getValidMoves(p[0],p[1]);
+  if(mvs.length===0){_aiRunning=false;triggerWin(pl==='p1'?'p2':'p1');return;}
+
+  // Inicia o indicador visual de "pensando" em tempo real
+  _startThinkingUI(pl);
+
+  // setTimeout(0) libera o navegador para renderizar "IA PROCESSANDO" antes
+  // de entrar no cálculo síncrono (Minimax/Alfa-Beta). Sem isso, a tela travaria
+  // durante a busca e o indicador visual nunca apareceria.
+  setTimeout(()=>{
+    const isAB = algo==='alfabeta';
+    let mmRes={bestMove:null,bestBlock:null,nodes:0,timeMs:'0'};
+    let abRes={bestMove:null,bestBlock:null,nodes:0,pruned:0,timeMs:'0'};
+
+    if(isAB){
+      abRes=runAlphaBeta(pl,mvs);
+    } else {
+      mmRes=runMinimax(pl,mvs);
+    }
+
+    const activeN = isAB ? abRes.nodes : mmRes.nodes;
+    const activeT = isAB ? abRes.timeMs : mmRes.timeMs;
+    const abPr    = abRes.pruned || 0;
+
+    // Para o contador de tempo e exibe o resultado
+    _stopThinkingUI(activeT, activeN);
+
+    // Atualiza a barra de performance (mantida para compatibilidade visual)
+    const pbActive=document.getElementById('pb-active');
+    const isABFlag = isAB;
+    if(pbActive){
+      pbActive.style.width='100%';
+      pbActive.style.background=isABFlag
+        ? 'linear-gradient(90deg,var(--silver2),var(--chrome))'
+        : 'linear-gradient(90deg,var(--gold3),var(--gold))';
+    }
+    const pbVal=document.getElementById('pb-active-val');
+    if(pbVal) pbVal.textContent = activeT + 'ms';
+    const perfAlgLbl=document.getElementById('perf-alg-lbl');
+    const perfBarLbl=document.getElementById('perf-bar-lbl');
+    const algName=isABFlag?'α-β PODA':'MINIMAX';
+    if(perfAlgLbl) perfAlgLbl.textContent=algName;
+    if(perfBarLbl) perfBarLbl.textContent=algName;
+
+    // Nós e podas apenas no console — não exibidos na interface
+    lastAIms=activeT;
+    nodesVisited=activeN;
+    totalNodesGame+=activeN;
+    totalPrunesGame+=abPr;
+    // HUD lê de stat-nodes — atualizar mesmo escondido
+    const statNodesEl=document.getElementById('stat-nodes');
+    if(statNodesEl) statNodesEl.textContent=String(activeN);
+
+    let chosenMove  = isABFlag ? abRes.bestMove  : mmRes.bestMove;
+    let chosenBlock = isABFlag ? abRes.bestBlock : mmRes.bestBlock;
+
+    // Fallback: se o cutoff disparou antes de avaliar qualquer raiz,
+    // chosenMove fica null — pega o primeiro movimento legal como rede de segurança
+    if(!chosenMove){
+      chosenMove = mvs[0];
+      log('sys',`⚠ IA sem decisão (cutoff:${_searchCtx.reason||'?'}) — usando fallback`);
+    }
+
+    log(pl,`[${algName}] ${activeT}ms · ${activeN} nós · PLY ${difficulty}${_searchCtx.cutoff?' · CUTOFF:'+_searchCtx.reason:''}`);
+    console.log(
+      `%c[IA · Turno ${turnCount}] ${algName}`,
+      isABFlag ? 'color:#b0b8c8;font-weight:bold' : 'color:#ffd700;font-weight:bold',
+      `\n  Nós analisados : ${activeN}`,
+      `\n  Tempo total    : ${activeT}ms`,
+      `\n  PLY            : ${difficulty}`,
+      `\n  Encerramento   : ${_searchCtx.reason}`
+    );
+
+    // Breakdown heurístico para painel de debug
+    const chosenPos = pl==='p1'?posP1:posP2;
+    if(chosenMove){
+      applyMoveOnly(pl, chosenPos[0], chosenPos[1], chosenMove[0], chosenMove[1]);
+      heuristic(pl, true);
+      const piece=pl==='p1'?P1:P2;
+      board[chosenMove[0]][chosenMove[1]]=EMPTY;
+      board[chosenPos[0]][chosenPos[1]]=piece;
+      if(pl==='p1'){posP1=[chosenPos[0],chosenPos[1]];}else{posP2=[chosenPos[0],chosenPos[1]];}
+      updateHeuPanel();
+    }
+
+    _aiRunning = false; // libera o lock antes de executar o movimento
+    execAIMove(pl, p[0], p[1], chosenMove[0], chosenMove[1], chosenBlock);
+  }, 0);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   EXECUÇÃO DO MOVIMENTO DA IA no tabuleiro real
+   ---------------------------------------------------------------
+   Depois que o Minimax/Alfa-Beta escolheu o melhor par
+   (movimento + bloco), esta função aplica a decisão visivelmente
+   no tabuleiro, registra no histórico, atualiza o log e passa
+   o turno para o próximo jogador.
+═══════════════════════════════════════════════════════════════ */
+function execAIMove(pl, fr, fc, tr, tc, block){
+  const COLS_L=['A','B','C','D','E','F','G','H','I'];
+
+  // Save snapshot
+  history.push({
+    pl, fr, fc, tr, tc,
+    boardSnap: board.map(row=>[...row]),
+    p1Snap:[...posP1], p2Snap:[...posP2]
+  });
+
+  applyMoveOnly(pl, fr, fc, tr, tc);
+  spawnParticles(tr, tc, pl);
+
+  // Choose block: use AI choice, or fallback to random empty cell
+  let br, bc;
+  if(block){
+    [br,bc]=block;
+  } else {
+    const cands=getBlockCandidatesAI(pl);
+    if(cands.length>0){[br,bc]=cands[Math.floor(Math.random()*cands.length)];}
+  }
+
+  if(br!==undefined){
+    applyBlock(br, bc);
+    // Update snapshot
+    history[history.length-1].blockR=br;
+    history[history.length-1].blockC=bc;
+    history[history.length-1].boardSnap=board.map(row=>[...row]);
+    log(pl,`${pl==='p1'?'[P1]':'[P2]'} → ${COLS_L[tc]}${tr+1}  bloqueou ${COLS_L[bc]}${br+1}`);
+  }
+
+  renderBoard();
+  const cells=document.getElementById('board').querySelectorAll('.cell');
+  const idx=tr*COLS+tc;
+  const pieceEl=cells[idx]?.querySelector('.piece');
+  if(pieceEl){pieceEl.classList.add('entering');setTimeout(()=>pieceEl.classList.remove('entering'),400);}
+
+  // Check next player
+  const next=pl==='p1'?'p2':'p1';
+  const nextPos=next==='p1'?posP1:posP2;
+  const nextMvs=getValidMoves(nextPos[0],nextPos[1]);
+  if(nextMvs.length===0){
+    triggerWin(pl);
+    return;
+  }
+
+  curTurn=next;
+  turnCount++;
+  phase='move';
+  setStatus();
+
+  // Se passou para o turno do humano, indica visualmente que o painel está "em espera"
+  // (stat-time removido)
+
+  if(!pvpMode && !aiVsAI && curTurn==='p2'){
+    aiTimer=setTimeout(()=>aiMove(),1000);
+  } else if(aiVsAI){
+    aiTimer=setTimeout(()=>aiMove(),1000);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FIM DE JOGO
+   ---------------------------------------------------------------
+   Chamada quando um jogador fica sem movimentos válidos.
+   Registra a vitória, exibe a tela de resultados e calcula
+   as estatísticas finais da partida (turnos, nós visitados).
+═══════════════════════════════════════════════════════════════ */
+function triggerWin(winner){
+  gameOver=true; window.__gameOver=true;
+  phase='move';
+  blockCandidates=[];
+  wins[winner]++;
+  document.getElementById(`pwin-${winner}`).textContent=wins[winner];
+
+  // Scoreboard bump
+  const sbEl = document.getElementById(`sb-score-${winner}`);
+  if(sbEl){
+    sbEl.textContent = wins[winner];
+    sbEl.classList.add('bump');
+    setTimeout(()=>sbEl.classList.remove('bump'), 400);
+  }
+
+  const name=winner==='p1'?'PLAYER 1':'PLAYER 2';
+  log('sys',`★ ${name} venceu por isolamento!`);
+  const wn=document.getElementById('wname');
+  wn.textContent=name;
+  wn.className='win-name w'+winner;
+
+  // Mostrar turnos disputados
+  const wt=document.getElementById('win-turns');
+  if(wt) wt.textContent=`${turnCount} ${turnCount===1?'turno':'turnos'} disputados`;
+
+  const el=document.getElementById('gstatus');
+  el.className='gstatus s-win';
+  el.querySelector('.sdot').style.background='var(--gold)';
+  document.getElementById('gstatus-txt').textContent=`${name} venceu por isolamento!`;
+  setTimeout(()=>document.getElementById('woverlay').classList.add('show'),700);
+  renderBoard();
+}
+
+function closeWin(){
+  document.getElementById('woverlay').classList.remove('show');
+  resetGame();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   REINICIAR PARTIDA
+   ---------------------------------------------------------------
+   Zera TUDO: tabuleiro, contadores, log, painel de performance.
+   Chamada quando o jogador fecha a tela de vitória ou clica em
+   "Nova Partida". As vitórias acumuladas (placar) são preservadas.
+═══════════════════════════════════════════════════════════════ */
+function resetGame(){
+  if(aiTimer) clearTimeout(aiTimer);
+  aiTimer=null;
+  _aiRunning=false;
+  gameOver=false; window.__gameOver=false;
+  curTurn='p1';
+  selCell=null;
+  validMoves=[];
+  blockCandidates=[];
+  phase='move';
+  history=[];
+  turnCount=1;
+  nodesVisited=0; abNodes=0; pruneCount=0; lastAIms=null;
+  totalNodesGame=0; totalPrunesGame=0;
+
+  initBoard();
+
+  document.getElementById('glog').innerHTML='';
+  document.getElementById('woverlay').classList.remove('show');
+  const _pbA=document.getElementById('pb-active');
+  if(_pbA) _pbA.style.width='0%';
+  const _pbAV=document.getElementById('pb-active-val');
+  if(_pbAV) _pbAV.textContent='—';
+  document.getElementById('stat-nodes').textContent='0';
+  if(algo==='alfabeta') document.getElementById('stat-prune').textContent='—';
+
+  log('sys','Nova partida iniciada');
+  renderBoard();
+  setStatus();
+
+  // Reset thinking UI
+  _stopThinkingUI('—');
+  const p2ms=document.getElementById('p2-last-ms');
+  if(p2ms) p2ms.textContent='—';
+  const lastDec=document.getElementById('last-decision-val');
+  if(lastDec) lastDec.textContent='—';
+
+  if(aiVsAI){
+    aiTimer=setTimeout(()=>aiMove(),800);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DESFAZER JOGADA
+   ---------------------------------------------------------------
+   No modo Humano vs IA, desfaz os dois últimos movimentos de uma
+   vez (o seu e o da IA), voltando para o estado antes da sua jogada.
+
+   O histórico (history[]) guarda um "snapshot" do tabuleiro antes
+   de cada jogada — é só restaurar o snapshot anterior.
+═══════════════════════════════════════════════════════════════ */
+function undoMove(){
+  if(gameOver||history.length<1) return;
+  // If in block phase, cancel block phase first
+  if(phase==='block'){
+    const last=history.pop();
+    board=last.boardSnap.map(row=>[...row]);
+    posP1=[...last.p1Snap]; posP2=[...last.p2Snap];
+    phase='move'; blockCandidates=[];
+    selCell=null; validMoves=[];
+    log('sys','Movimento desfeito');
+    renderBoard(); setStatus();
+    return;
+  }
+  const steps=(!aiVsAI&&!pvpMode)?Math.min(2,history.length):1;
+  for(let i=0;i<steps;i++){
+    if(history.length===0) break;
+    const last=history.pop();
+    board=last.boardSnap.map(row=>[...row]);
+    posP1=[...last.p1Snap]; posP2=[...last.p2Snap];
+    turnCount=Math.max(1,turnCount-1);
+  }
+  curTurn='p1'; selCell=null; validMoves=[];
+  blockCandidates=[]; phase='move';
+  gameOver=false;
+  if(aiTimer){clearTimeout(aiTimer);aiTimer=null;}
+  log('sys','Jogada desfeita');
+  renderBoard(); setStatus();
+}
+
+/* ═══════════════════════
+   CONTROLS
+═══════════════════════ */
+/* Muda a dificuldade — PLY define quantos níveis a IA olha à frente:
+   PLY 1 = 1 jogada (fácil, rápido)
+   PLY 2 = 2 jogadas (médio)
+   PLY 3 = 3 jogadas (difícil — cap de blocos reduzido para não travar) */
+function setDiff(ply,btn){
+  difficulty=ply;
+  document.querySelectorAll('[data-ply]').forEach(b=>b.classList.remove('sel-diff'));
+  btn.classList.add('sel-diff');
+  log('sys',`Dificuldade: PLY-${ply}`);
+}
+
+/* Troca o algoritmo ativo entre Minimax puro e Alfa-Beta.
+   Ambos chegam à mesma decisão — a diferença é a velocidade:
+   Alfa-Beta "poda" ramos que não mudariam o resultado, sendo mais rápido. */
+function setAlgo(a,btn){
+  algo=a;
+  const isAB=a==='alfabeta';
+  document.getElementById('btn-mm').className='gbutton'+(a==='minimax'?' sel-algo':'');
+  document.getElementById('btn-ab').className='gbutton'+(isAB?' sel-algo':'');
+  // Atualiza painel de performance para refletir o algoritmo escolhido
+  const algName=isAB?'α-β PODA':'MINIMAX';
+  const perfLbl=document.getElementById('perf-alg-lbl');
+  const barLbl=document.getElementById('perf-bar-lbl');
+  const pbEl=document.getElementById('pb-active');
+  if(perfLbl) perfLbl.textContent=algName;
+  if(barLbl) barLbl.textContent=algName;
+  if(pbEl) pbEl.style.background=isAB
+    ?'linear-gradient(90deg,var(--silver2),var(--chrome))'
+    :'linear-gradient(90deg,var(--gold3),var(--gold))';
+  const pruneRow=document.getElementById('prune-row');
+  if(pruneRow) pruneRow.style.display=isAB?'':'none';
+  // Reset stats display
+  document.getElementById('stat-nodes').textContent='0';
+  if(isAB) document.getElementById('stat-prune').textContent='—';
+  log('sys',`Algoritmo: ${isAB?'Poda Alfa-Beta':'Minimax puro'}`);
+}
+
+function setSize(sz,btn){
+  ROWS=sz; COLS=sz;
+  document.querySelectorAll('[data-sz]').forEach(b=>b.classList.remove('sel-sz'));
+  btn.classList.add('sel-sz');
+  log('sys',`Tabuleiro ${sz}×${sz}`);
+  resetGame();
+}
+
+function toggleAIvAI(){
+  if(pvpMode) return; // can't combine with PvP
+  aiVsAI=!aiVsAI;
+  const btn=document.getElementById('btn-avai');
+  btn.textContent=`⚡ IA VS IA: ${aiVsAI?'ON':'OFF'}`;
+  btn.className='gbutton'+(aiVsAI?' sel-mode':'');
+  document.getElementById('ptype-p1').textContent=aiVsAI?'IA':'HUMANO';
+  log('sys',`Modo IA vs IA: ${aiVsAI?'ativado':'desativado'}`);
+  if(aiVsAI&&!gameOver){
+    aiTimer=setTimeout(()=>aiMove(),600);
+  } else if(aiTimer){
+    clearTimeout(aiTimer); aiTimer=null;
+  }
+}
+
+function togglePvP(){
+  // Desliga AI vs AI silenciosamente (sem o reset/log do toggleAIvAI)
+  if(aiVsAI){
+    aiVsAI=false;
+    const avaiBtn=document.getElementById('btn-avai');
+    avaiBtn.textContent='⚡ IA VS IA: OFF';
+    avaiBtn.className='gbutton';
+  }
+  pvpMode=!pvpMode;
+  const btn=document.getElementById('btn-pvp');
+  btn.textContent=`👥 PVP: ${pvpMode?'ON':'OFF'}`;
+  btn.className='gbutton'+(pvpMode?' sel-mode':'');
+  document.getElementById('ptype-p1').textContent='HUMANO';
+  document.getElementById('ptype-p2').textContent=pvpMode?'HUMANO':'IA';
+  if(aiTimer){clearTimeout(aiTimer);aiTimer=null;}
+  log('sys',`Modo PvP: ${pvpMode?'ativado':'desativado'}`);
+  resetGame();
+}
+
+/* ═══════════════════════
+   LOG
+═══════════════════════ */
+function log(pl,msg){
+  const panel=document.getElementById('glog');
+  const now=new Date();
+  const t=`[${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}]`;
+  const e=document.createElement('div');
+  e.className='log-e l'+pl;
+  e.innerHTML=`<span class="lt">${t}</span><span class="lm">${msg}</span>`;
+  panel.appendChild(e);
+  panel.scrollTop=panel.scrollHeight;
+}
+
+/* ═══════════════════════
+   PARTICLES
+═══════════════════════ */
+const PARTICLE_COLORS={
+  p1:['#ffd700','#ffb300','#ffe066','#c8860a','#fff3a0'],
+  p2:['#e8e8e8','#b0b8c8','#ffffff','#d0dcea','#a0a8b8']
+};
+function spawnParticles(r,c,pl){
+  const cells=document.getElementById('board').querySelectorAll('.cell');
+  const cell=cells[r*COLS+c];
+  if(!cell) return;
+  const rect=cell.getBoundingClientRect();
+  const cx=rect.left+rect.width/2, cy=rect.top+rect.height/2;
+  const cols=PARTICLE_COLORS[pl]||PARTICLE_COLORS.p1;
+  for(let i=0;i<14;i++){
+    const p=document.createElement('div');
+    const col=cols[Math.floor(Math.random()*cols.length)];
+    const angle=(Math.PI*2*i)/14;
+    const dist=20+Math.random()*44;
+    const sz=2+Math.random()*4;
+    const shape=Math.random()>.5?'50%':'2px';
+    p.style.cssText=`
+      position:fixed;z-index:6000;pointer-events:none;
+      left:${cx}px;top:${cy}px;
+      width:${sz}px;height:${sz}px;
+      border-radius:${shape};
+      background:${col};
+      box-shadow:0 0 4px ${col};
+      --dx:${Math.cos(angle)*dist}px;
+      --dy:${Math.sin(angle)*dist}px;
+      animation:particle-float ${.35+Math.random()*.45}s linear forwards;
+    `;
+    document.body.appendChild(p);
+    setTimeout(()=>p.remove(),800);
+  }
+}
+
+/* ═══════════════════════
+   INIT
+═══════════════════════ */
+initBoard();
+renderBoard();
+setStatus();
+log('sys','ISOLATION v3.0 — Modo Rei + Bloqueio Manual');
+log('sys','▶ PLAYER 1 (ouro) começa. Mova seu peão, depois escolha uma casa para bloquear.');
+
+/* ═══════════════════════
+   HEURÍSTICA PANEL TOGGLE
+═══════════════════════ */
+let heuPanelOpen = false;
+function toggleHeuPanel(){
+  heuPanelOpen = !heuPanelOpen;
+  const panel = document.getElementById('heu-debug');
+  const icon  = document.getElementById('heu-toggle-icon');
+  if(panel){
+    panel.style.display = heuPanelOpen ? 'flex' : 'none';
+  }
+  if(icon) icon.textContent = heuPanelOpen ? '− OCULTAR' : '+ EXIBIR';
+  if(window.sfxUI) window.sfxUI.click();
+}
+
+
+
+/* ════════════════════════════════════════════════════════
+   CINEMATIC UPGRADE SYSTEM v2 — safe, crash-free
+   Regra fundamental: NUNCA wrappamos funções chamadas
+   internamente pelos algoritmos (applyBlock, renderBoard,
+   aiMove). Hooks são feitos apenas em eventos do usuário.
+════════════════════════════════════════════════════════ */
+(function(){
+'use strict';
+
+/* ═══════════════════════════════════
+   1. CURSOR CUSTOMIZADO
+═══════════════════════════════════ */
+const cursor = document.getElementById('cursor');
+const cursorDot = document.getElementById('cursor-dot');
+let cx = window.innerWidth/2, cy = window.innerHeight/2;
+let dotX = cx, dotY = cy;
+
+document.addEventListener('mousemove', e => {
+  cx = e.clientX; cy = e.clientY;
+  cursor.style.left = cx+'px';
+  cursor.style.top  = cy+'px';
+});
+
+(function animDot(){
+  dotX += (cx - dotX) * 0.16;
+  dotY += (cy - dotY) * 0.16;
+  cursorDot.style.left = dotX+'px';
+  cursorDot.style.top  = dotY+'px';
+  requestAnimationFrame(animDot);
+})();
+
+document.addEventListener('mousedown', () => cursor.classList.add('cursor-click'));
+document.addEventListener('mouseup',   () => cursor.classList.remove('cursor-click'));
+document.addEventListener('mouseover', e => {
+  cursor.classList.toggle('cursor-hover',
+    !!e.target.closest('button,.cell,.btn-metal,.gbutton,.gctrl,.exp-btn'));
+});
+
+/* ═══════════════════════════════════
+   2. BACKGROUND — canvas de partículas
+   Roda em requestAnimationFrame isolado.
+   Não toca em nenhuma variável do jogo.
+═══════════════════════════════════ */
+const bgCanvas = document.getElementById('particle-canvas');
+const bc = bgCanvas.getContext('2d');
+let W, H;
+
+function resizeBg(){
+  W = bgCanvas.width  = window.innerWidth;
+  H = bgCanvas.height = window.innerHeight;
+}
+resizeBg();
+window.addEventListener('resize', resizeBg);
+
+// Holographic scan lines (apenas 4 para não pesar)
+const hLines = Array.from({length:4}, () => ({
+  y:     Math.random() * window.innerHeight,
+  speed: 0.25 + Math.random() * 0.35,
+  op:    0.012 + Math.random() * 0.018
+}));
+
+// Partículas (pool fixo de 40)
+const POOL = 40;
+function mkParticle(){
+  const gold = Math.random() > 0.38;
+  return {
+    x: Math.random()*W, y: Math.random()*H,
+    vx: (Math.random()-.5)*.15, vy: -.08-Math.random()*.2,
+    r: .3+Math.random()*1.0,
+    op: .08+Math.random()*.28,
+    color: gold ? '255,215,0' : '200,218,238',
+    life: Math.random(), decay: .0006+Math.random()*.0008
+  };
+}
+const pts = Array.from({length:POOL}, mkParticle);
+
+// Grid estático pré-renderizado num offscreen canvas
+const offGrid = document.createElement('canvas');
+function buildGrid(){
+  offGrid.width = W; offGrid.height = H;
+  const og = offGrid.getContext('2d');
+  og.strokeStyle = 'rgba(255,215,0,0.022)';
+  og.lineWidth = .5;
+  const gs = 64;
+  for(let x=0;x<W;x+=gs){og.beginPath();og.moveTo(x,0);og.lineTo(x,H);og.stroke();}
+  for(let y=0;y<H;y+=gs){og.beginPath();og.moveTo(0,y);og.lineTo(W,y);og.stroke();}
+}
+buildGrid();
+window.addEventListener('resize', buildGrid);
+
+let bgRaf;
+function drawBg(){
+  // Pausa quando a aba está oculta — economiza CPU em segundo plano
+  if(document.hidden){ bgRaf=requestAnimationFrame(drawBg); return; }
+  bc.clearRect(0,0,W,H);
+  bc.drawImage(offGrid,0,0); // grid: custo zero (bitmap)
+
+  // scan lines
+  hLines.forEach(l => {
+    l.y += l.speed;
+    if(l.y > H) l.y = -2;
+    const g = bc.createLinearGradient(0,0,W,0);
+    g.addColorStop(0,'transparent');
+    g.addColorStop(.25,`rgba(255,215,0,${l.op})`);
+    g.addColorStop(.5, `rgba(240,240,240,${l.op*.5})`);
+    g.addColorStop(.75,`rgba(255,215,0,${l.op})`);
+    g.addColorStop(1,'transparent');
+    bc.beginPath(); bc.moveTo(0,l.y); bc.lineTo(W,l.y);
+    bc.strokeStyle = g; bc.lineWidth = .4; bc.stroke();
+  });
+
+  // partículas
+  for(let i=0;i<POOL;i++){
+    const p = pts[i];
+    p.x += p.vx; p.y += p.vy; p.life -= p.decay;
+    if(p.life <= 0 || p.y < -4){ pts[i] = mkParticle(); continue; }
+    bc.beginPath();
+    bc.arc(p.x, p.y, p.r, 0, 6.283);
+    bc.fillStyle = `rgba(${p.color},${p.op*p.life})`;
+    bc.fill();
+  }
+  bgRaf = requestAnimationFrame(drawBg);
+}
+drawBg();
+
+/* ═══════════════════════════════════
+   3. SFX DE INTERFACE — Web Audio API
+   Apenas sons curtos de UI (sem música).
+   AudioContext criado na 1ª interação.
+   Cada som: oscilador + gain, duração < 200ms.
+═══════════════════════════════════ */
+let _AC = null;
+function _getAC(){
+  if(!_AC) _AC = new (window.AudioContext||window.webkitAudioContext)();
+  if(_AC.state==='suspended') _AC.resume();
+  return _AC;
+}
+function _tone(freq, type, dur, vol, detune=0){
+  try{
+    const ac=_getAC();
+    const osc=ac.createOscillator(), g=ac.createGain();
+    osc.connect(g); g.connect(ac.destination);
+    osc.type=type; osc.frequency.value=freq; osc.detune.value=detune;
+    const t=ac.currentTime;
+    g.gain.setValueAtTime(vol,t);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    osc.start(t); osc.stop(t+dur+.01);
+  }catch(_){}
+}
+
+// sfxUI: sons para eventos do usuário (teclado, botões, tabuleiro)
+// sfx: alias público para compatibilidade com o código existente
+window.sfxUI = {
+  move()  { _tone(520,'sine',.09,.06); _tone(740,'sine',.06,.035,8); },
+  block() { _tone(180,'square',.12,.05); _tone(120,'sawtooth',.16,.025,30); },
+  click() { _tone(1200,'sine',.045,.028); },
+  valid() { _tone(860,'sine',.055,.022); },
+  turn()  { _tone(580,'sine',.065,.032); },
+  win()   {
+    [523,659,784,1047].forEach((f,i)=>setTimeout(()=>_tone(f,'sine',.9,.07),i*55));
+    setTimeout(()=>[659,784,988].forEach((f,i)=>setTimeout(()=>_tone(f,'sine',.7,.05),i*55)),300);
+  },
+  lose()  { [220,185,150].forEach((f,i)=>setTimeout(()=>_tone(f,'sawtooth',1.2,.05),i*70)); }
+};
+window.sfx = window.sfxUI; // alias global
+
+// Inicializa o AudioContext na primeira interação do usuário
+document.addEventListener('click', ()=>{ try{_getAC();}catch(_){} }, {once:true});
+
+/* ═══════════════════════════════════
+   4. SCREEN SHAKE (só na vitória)
+   Aplicado no body com classe CSS.
+═══════════════════════════════════ */
+function screenShake(){
+  document.body.classList.remove('screen-shake');
+  void document.body.offsetWidth;
+  document.body.classList.add('screen-shake');
+  setTimeout(()=>document.body.classList.remove('screen-shake'), 450);
+}
+
+/* ═══════════════════════════════════
+   5. TURN INDICATOR (flash visual)
+═══════════════════════════════════ */
+const turnInd = document.getElementById('cx-turnbar');
+function flashTurn(player){
+  if(!turnInd) return;
+  turnInd.className = '';
+  void turnInd.offsetWidth;
+  turnInd.className = player==='p1' ? 'tp1' : 'tp2';
+  sfx.turn();
+  // Scoreboard active highlight
+  const sp1 = document.getElementById('sb-p1');
+  const sp2 = document.getElementById('sb-p2');
+  if(sp1) sp1.classList.toggle('active-p1', player==='p1');
+  if(sp2) sp2.classList.toggle('active-p2', player==='p2');
+}
+
+/* ═══════════════════════════════════
+   6. EVENTOS DO JOGO — via DOM events
+   Escutamos apenas cliques reais do
+   usuário no tabuleiro, nunca wrapamos
+   funções internas dos algoritmos.
+═══════════════════════════════════ */
+let _lastPhase = 'move';
+let _lastTurn  = null;
+let _validShownThisTurn = false;
+
+document.getElementById('board').addEventListener('click', e => {
+  const cell = e.target.closest('.cell');
+  if(!cell) return;
+
+  // detecta por atributo de classe o que aconteceu
+  const cl = cell.classList;
+  if(cl.contains('c-valid') || cl.contains('c-block-pick')){
+    sfx.move(); // clique em destino válido
+  } else if(cl.contains('c-p1') || cl.contains('c-p2')){
+    sfx.valid(); // clique na peça (mostra válidos)
+  }
+}, true);
+
+// Detecta bloqueio: o humano clica numa casa c-block-pick
+document.getElementById('board').addEventListener('click', e => {
+  const cell = e.target.closest('.cell.c-block-pick');
+  if(cell) sfx.block();
+}, true);
+
+// Detecta vitória via aparição do overlay
+const winOverlay = document.getElementById('woverlay');
+const winObserver = new MutationObserver(() => {
+  if(winOverlay.classList.contains('show')){
+    screenShake();
+    // detecta quem venceu pelo nome exibido
+    const name = document.getElementById('wname')?.textContent || '';
+    if(name.includes('PLAYER 1')) sfx.win(); else sfx.lose();
+  }
+});
+winObserver.observe(winOverlay, {attributes:true, attributeFilter:['class']});
+
+// Detecta troca de turno via card ativo
+const p1card = document.getElementById('pcard-p1');
+const p2card = document.getElementById('pcard-p2');
+const turnObserver = new MutationObserver(() => {
+  const cur = p1card.classList.contains('active-p1') ? 'p1' : 'p2';
+  if(cur !== _lastTurn){
+    if(_lastTurn !== null) flashTurn(cur);
+    _lastTurn = cur;
+  }
+});
+turnObserver.observe(p1card, {attributes:true, attributeFilter:['class']});
+turnObserver.observe(p2card, {attributes:true, attributeFilter:['class']});
+
+// Detecta IA pensando via aparição de c-empty sem c-valid
+// (board re-renderiza sem valid cells = IA calculando ou turno resetado)
+const boardEl = document.getElementById('board');
+let _aiGlowTimer = null;
+const boardObserver = new MutationObserver(() => {
+  const bf = document.querySelector('.board-frame');
+  if(!bf) return;
+  // Se existe alguma célula com c-valid, humano está escolhendo
+  const hasValid = !!boardEl.querySelector('.c-valid,.c-block-pick');
+  bf.classList.toggle('ai-thinking', !hasValid && !window.__gameOver);
+});
+boardObserver.observe(boardEl, {childList:true, subtree:false});
+
+/* ═══════════════════════════════════
+   7. HUD — atualiza a cada 1s via
+   setInterval, sem tocar no jogo
+═══════════════════════════════════ */
+function updateHUD(){
+  try{
+    const alg = document.getElementById('btn-ab')?.classList.contains('sel-algo') ? 'α-β' : 'MM';
+    const ply = document.querySelector('.gbutton.sel-diff')?.dataset?.ply || '?';
+    const nds = document.getElementById('stat-nodes')?.textContent || '0';
+    const alEl = document.getElementById('hud-alg');
+    const plEl = document.getElementById('hud-ply');
+    const ndEl = document.getElementById('hud-nodes');
+    if(alEl) alEl.textContent = 'ALG · '+alg;
+    if(plEl) plEl.textContent = 'PLY · '+ply;
+    if(ndEl) ndEl.textContent = 'NDS · '+nds;
+  }catch(_){}
+}
+setInterval(updateHUD, 1000);
+
+/* ── sons em botões de configuração ── */
+document.querySelectorAll('.gbutton,.gctrl,.btn-metal,.exp-btn')
+  .forEach(b => b.addEventListener('click', () => sfx.click()));
+
+})(); // fim CINEMATIC UPGRADE v2
+</script>
+</body>
+</html>

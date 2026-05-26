@@ -1,0 +1,2641 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Isolation — Apresentação · Arthur Xavier</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:        #07080d;
+      --bg2:       #0e1018;
+      --bg3:       #14161f;
+      --seam:      #2a2d3a;
+      --fog:       #4a5070;
+      --snow:      #f0f0f0;
+      --snow2:     #9aa0b8;
+      --gold:      #ffd700;
+      --gold2:     #ffb300;
+      --gold3:     #c8860a;
+      --silver:    #e8e8e8;
+      --silver2:   #b0b8c8;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--snow);
+      font-family: 'Inter', sans-serif;
+      line-height: 1.65;
+      overflow-x: hidden;
+    }
+
+    /* ── NAV ─────────────────────────────── */
+    header {
+      background: var(--bg2);
+      border-bottom: 1px solid var(--seam);
+      padding: 18px 36px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      font-size: 0.85rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+
+    nav ul { list-style: none; display: flex; gap: 28px; }
+    nav a {
+      color: var(--fog);
+      text-decoration: none;
+      font-size: 0.82rem;
+      letter-spacing: 0.04em;
+      transition: color 0.2s;
+    }
+    nav a:hover { color: var(--gold); }
+
+    @media (max-width: 700px) { nav ul { display: none; } }
+
+    /* ── HERO ────────────────────────────── */
+    .hero {
+      text-align: center;
+      padding: 110px 32px 80px;
+      background: linear-gradient(160deg, rgba(255,215,0,0.06) 0%, transparent 55%);
+      border-bottom: 1px solid var(--seam);
+    }
+
+    .hero-badge {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold3);
+      border: 1px solid var(--gold3);
+      border-radius: 4px;
+      padding: 4px 12px;
+      margin-bottom: 28px;
+    }
+
+    .hero h1 {
+      font-size: clamp(3rem, 8vw, 6rem);
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      color: var(--gold);
+      margin-bottom: 16px;
+      text-shadow: 0 0 40px rgba(255,215,0,0.2);
+    }
+
+    .hero-sub {
+      font-size: 1.05rem;
+      color: var(--snow2);
+      max-width: 620px;
+      margin: 0 auto 48px;
+    }
+
+    .hero-chips {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 52px;
+    }
+
+    .chip {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      padding: 6px 14px;
+      border-radius: 4px;
+      border: 1px solid var(--seam);
+      color: var(--silver2);
+      background: var(--bg2);
+      letter-spacing: 0.06em;
+    }
+    .chip.gold { border-color: var(--gold3); color: var(--gold); }
+
+    .hero-meta {
+      display: flex;
+      gap: 56px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .meta-item { text-align: center; }
+    .meta-label {
+      font-size: 0.68rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--fog);
+      margin-bottom: 6px;
+    }
+    .meta-value {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--gold);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ── SEÇÕES ──────────────────────────── */
+    .section {
+      padding: 84px 36px;
+      border-bottom: 1px solid var(--seam);
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .section:last-of-type { border-bottom: none; }
+
+    .sec-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold3);
+      margin-bottom: 10px;
+    }
+
+    .sec-title {
+      font-size: clamp(1.7rem, 3.5vw, 2.5rem);
+      font-weight: 700;
+      color: var(--snow);
+      margin-bottom: 14px;
+    }
+
+    .sec-desc {
+      font-size: 0.95rem;
+      color: var(--snow2);
+      max-width: 680px;
+      margin-bottom: 44px;
+      line-height: 1.75;
+    }
+
+    /* ── GRID DE REGRAS ──────────────────── */
+    .rules-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 48px;
+    }
+
+    .rule-card {
+      background: var(--bg2);
+      border: 1px solid var(--seam);
+      border-top: 3px solid var(--gold3);
+      border-radius: 6px;
+      padding: 22px 20px;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .rule-card:hover { border-top-color: var(--gold); background: var(--bg3); }
+
+    .rule-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem;
+      color: var(--gold3);
+      letter-spacing: 0.1em;
+      margin-bottom: 8px;
+    }
+
+    .rule-title {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--snow);
+      margin-bottom: 8px;
+    }
+
+    .rule-body {
+      font-size: 0.88rem;
+      color: var(--snow2);
+      line-height: 1.6;
+    }
+
+    /* ── TABULEIRO MINI ──────────────────── */
+    .board-demo {
+      display: flex;
+      gap: 48px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    .mini-board {
+      display: grid;
+      grid-template-columns: repeat(5, 48px);
+      gap: 3px;
+      flex-shrink: 0;
+    }
+
+    .mc {
+      width: 48px; height: 48px;
+      background: var(--bg3);
+      border: 1px solid var(--seam);
+      border-radius: 4px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.65rem;
+      color: var(--fog);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .mc.blocked { background: #0a0b10; color: #1a1c28; }
+    .mc.p1 { background: rgba(255,215,0,0.12); border-color: var(--gold3); }
+    .mc.p2 { background: rgba(232,232,232,0.08); border-color: var(--silver2); }
+
+    .mc.p1::after { content: '◉'; font-size: 1.4rem; color: var(--gold); }
+    .mc.p2::after { content: '◉'; font-size: 1.4rem; color: var(--silver); }
+    .mc.blocked::after { content: '✕'; font-size: 0.9rem; }
+
+    .board-legend { padding-top: 4px; }
+    .board-legend p { font-size: 0.88rem; color: var(--snow2); margin-bottom: 10px; line-height: 1.6; }
+    .leg-item { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 0.85rem; color: var(--snow2); }
+    .leg-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+    .leg-gold { background: var(--gold); }
+    .leg-silver { background: var(--silver); }
+    .leg-black { background: #0a0b10; border: 1px solid var(--seam); }
+
+    /* ── CODE BLOCK ──────────────────────── */
+    .code-wrap {
+      background: var(--bg2);
+      border: 1px solid var(--seam);
+      border-left: 3px solid var(--gold3);
+      border-radius: 6px;
+      overflow: hidden;
+      margin-bottom: 28px;
+    }
+
+    .code-header {
+      background: var(--bg3);
+      border-bottom: 1px solid var(--seam);
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .code-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--gold3);
+      letter-spacing: 0.06em;
+    }
+
+    .code-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem;
+      color: var(--fog);
+      letter-spacing: 0.06em;
+    }
+
+    pre {
+      padding: 24px 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem;
+      line-height: 1.75;
+      overflow-x: auto;
+      color: var(--snow2);
+    }
+
+    .kw  { color: var(--gold3); }
+    .fn  { color: var(--gold);  font-weight: 700; }
+    .cm  { color: var(--fog);   font-style: italic; }
+    .num { color: #7ec8e3; }
+    .str { color: #98d982; }
+    .hi  { color: var(--snow);  font-weight: 700; }
+    .hi2 { color: var(--gold2); }
+    .hi3 { color: #fc8181; }
+
+    /* ── MATRIZ VISUAL ───────────────────── */
+    .matrix-demo {
+      display: flex;
+      gap: 32px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 32px;
+    }
+
+    .matrix-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 44px);
+      gap: 3px;
+    }
+
+    .mx {
+      width: 44px; height: 44px;
+      background: var(--bg3);
+      border: 1px solid var(--seam);
+      border-radius: 3px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--fog);
+    }
+    .mx.v0 { color: var(--fog); }
+    .mx.v1 { background: #0a0b10; color: #2a2d3a; }
+    .mx.v2 { background: rgba(255,215,0,0.1); color: var(--gold); border-color: var(--gold3); }
+    .mx.v3 { background: rgba(232,232,232,0.07); color: var(--silver); border-color: var(--silver2); }
+
+    .matrix-legend { font-size: 0.88rem; color: var(--snow2); }
+    .matrix-legend p { margin-bottom: 8px; }
+    .ml { display: flex; gap: 10px; align-items: center; margin-bottom: 6px; font-size: 0.85rem; }
+    .ml-box {
+      width: 32px; height: 24px;
+      border-radius: 3px;
+      border: 1px solid var(--seam);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    /* ── ALGO CARDS ──────────────────────── */
+    .algo-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 36px;
+    }
+    @media (max-width: 700px) { .algo-grid { grid-template-columns: 1fr; } }
+
+    .algo-card {
+      background: var(--bg2);
+      border: 1px solid var(--seam);
+      border-radius: 8px;
+      padding: 28px;
+      transition: background 0.2s;
+    }
+    .algo-card:hover { background: var(--bg3); }
+    .algo-card.mm { border-top: 3px solid var(--gold3); }
+    .algo-card.ab { border-top: 3px solid var(--silver2); }
+
+    .algo-name {
+      font-weight: 700;
+      font-size: 1.05rem;
+      margin-bottom: 10px;
+    }
+    .algo-card.mm .algo-name { color: var(--gold); }
+    .algo-card.ab .algo-name { color: var(--silver); }
+
+    .algo-desc { font-size: 0.88rem; color: var(--snow2); margin-bottom: 16px; line-height: 1.65; }
+
+    .feat-list { list-style: none; font-size: 0.85rem; color: var(--snow2); }
+    .feat-list li {
+      padding: 5px 0;
+      border-bottom: 1px solid var(--seam);
+      display: flex; gap: 10px;
+    }
+    .feat-list li:last-child { border-bottom: none; }
+    .feat-list li::before { content: '—'; color: var(--gold3); flex-shrink: 0; }
+
+    /* ── ÁRVORE MINIMAX ──────────────────── */
+    .tree-wrap {
+      overflow-x: auto;
+      margin-bottom: 32px;
+    }
+
+    .tree {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      min-width: 520px;
+      padding: 24px 0;
+    }
+
+    .tree-row {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      margin-bottom: 8px;
+    }
+
+    .tree-node {
+      width: 64px; height: 40px;
+      border-radius: 5px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem;
+      font-weight: 700;
+      border: 1px solid var(--seam);
+      flex-shrink: 0;
+    }
+    .tn-max { background: rgba(255,215,0,0.12); border-color: var(--gold3); color: var(--gold); }
+    .tn-min { background: rgba(176,184,200,0.08); border-color: var(--silver2); color: var(--silver2); }
+    .tn-leaf { background: var(--bg3); border-color: var(--seam); color: var(--snow2); }
+    .tn-pruned { background: #0a0b10; border-color: #1a1c28; color: #2a2d3a; position: relative; }
+    .tn-pruned::after {
+      content: '✂';
+      position: absolute;
+      top: -12px; right: -6px;
+      font-size: 0.75rem;
+      color: var(--fog);
+    }
+
+    .tree-label {
+      font-size: 0.7rem;
+      color: var(--fog);
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: 0.06em;
+      text-align: right;
+      padding-right: 12px;
+      min-width: 80px;
+    }
+    .tree-row-wrap {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      justify-content: center;
+    }
+
+    .tree-connector {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      width: 100%;
+      padding: 0 80px;
+      margin-bottom: 4px;
+    }
+    .tc-line { flex: 1; height: 18px; border-left: 1px solid var(--seam); border-bottom: 1px solid var(--seam); border-right: 1px solid var(--seam); }
+
+    /* ── HEURÍSTICA ──────────────────────── */
+    .formula-box {
+      background: var(--bg2);
+      border: 1px solid var(--gold3);
+      border-radius: 6px;
+      padding: 22px 28px;
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .formula-main {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: clamp(1rem, 2.5vw, 1.4rem);
+      color: var(--snow);
+      margin-bottom: 10px;
+    }
+    .formula-main .f-var { color: var(--gold); font-weight: 700; }
+    .formula-main .f-op  { color: var(--fog); }
+
+    .formula-sub {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      color: var(--fog);
+    }
+
+    .heu-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .heu-card {
+      background: var(--bg2);
+      border: 1px solid var(--seam);
+      border-radius: 6px;
+      padding: 22px;
+      transition: background 0.2s, transform 0.2s;
+    }
+    .heu-card:hover { background: var(--bg3); transform: translateY(-2px); }
+    .heu-card.l1 { border-left: 4px solid var(--gold); }
+    .heu-card.l2 { border-left: 4px solid var(--gold2); }
+    .heu-card.lt { border-left: 4px solid #68d391; }
+
+    .heu-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .heu-card.l1 .heu-tag { color: var(--gold); }
+    .heu-card.l2 .heu-tag { color: var(--gold2); }
+    .heu-card.lt .heu-tag { color: #68d391; }
+
+    .heu-title { font-weight: 700; font-size: 0.95rem; color: var(--snow); margin-bottom: 8px; }
+
+    .heu-body { font-size: 0.86rem; color: var(--snow2); line-height: 1.65; margin-bottom: 12px; }
+
+    .heu-formula {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.76rem;
+      color: var(--fog);
+      background: var(--bg);
+      border-radius: 4px;
+      padding: 8px 12px;
+    }
+
+    /* ── DEMO INTERATIVO LIBERDADE RELATIVA ── */
+    .demo-wrap {
+      background: var(--bg2);
+      border: 1px solid var(--gold3);
+      border-radius: 10px;
+      padding: 32px;
+      margin: 36px 0;
+    }
+    .demo-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.25em;
+      color: var(--gold3);
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .demo-heading {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--snow);
+      margin-bottom: 20px;
+    }
+    .demo-body {
+      display: flex;
+      gap: 32px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+    /* tabuleiro demo */
+    #demo-board {
+      display: grid;
+      grid-template-columns: repeat(5, 56px);
+      grid-template-rows: repeat(5, 56px);
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .dc {
+      width: 56px; height: 56px;
+      border-radius: 5px;
+      border: 1px solid rgba(255,255,255,.07);
+      background: #111320;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      font-weight: 700;
+      position: relative;
+      transition: background 0.35s, box-shadow 0.35s, transform 0.2s;
+      cursor: default;
+    }
+    .dc.blocked {
+      background: #07080d;
+      border-color: #0a0b10;
+    }
+    .dc.piece-p1 {
+      background: rgba(255,215,0,.12);
+      border-color: var(--gold);
+      box-shadow: 0 0 12px rgba(255,215,0,.35);
+    }
+    .dc.piece-p2 {
+      background: rgba(200,210,230,.08);
+      border-color: #b0b8c8;
+      box-shadow: 0 0 12px rgba(200,210,230,.25);
+    }
+    /* heat: classes dinâmicas injetadas pelo JS */
+    .dc.heat-0 { background:#0d1117; color:rgba(255,255,255,.2) }
+    .dc.heat-1 { background:#0e1a10; box-shadow:0 0 6px rgba(80,180,80,.2) }
+    .dc.heat-2 { background:#122410; box-shadow:0 0 8px rgba(100,200,80,.3) }
+    .dc.heat-3 { background:#1a3012; box-shadow:0 0 10px rgba(140,220,60,.4) }
+    .dc.heat-4 { background:#243810; box-shadow:0 0 12px rgba(180,240,40,.45) }
+    .dc.heat-5 { background:#2c4008; box-shadow:0 0 14px rgba(200,255,20,.5) }
+    .dc.heat-best {
+      background: rgba(255,215,0,.18);
+      border-color: var(--gold);
+      box-shadow: 0 0 20px rgba(255,215,0,.6), inset 0 0 8px rgba(255,215,0,.1);
+      transform: scale(1.08);
+      z-index: 2;
+    }
+    .dc.heat-worst {
+      background: rgba(200,50,50,.12);
+      border-color: #a03030;
+      box-shadow: 0 0 10px rgba(200,50,50,.25);
+    }
+    .dc .score-badge {
+      position: absolute;
+      bottom: 3px; right: 4px;
+      font-size: 0.52rem;
+      color: rgba(255,255,255,.55);
+      font-weight: 400;
+    }
+    .dc .piece-icon {
+      font-size: 1.4rem;
+      line-height: 1;
+      pointer-events: none;
+    }
+    /* painel lateral do demo */
+    .demo-panel {
+      flex: 1;
+      min-width: 220px;
+    }
+    .demo-step-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      color: var(--gold3);
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .demo-step-text {
+      font-size: 0.9rem;
+      color: var(--snow2);
+      line-height: 1.7;
+      margin-bottom: 20px;
+      min-height: 80px;
+    }
+    .demo-step-text strong { color: var(--snow); }
+    .demo-step-text .val-pos { color: #68d391; font-weight: 700; }
+    .demo-step-text .val-neg { color: #fc8181; font-weight: 700; }
+    .demo-step-text .val-gold { color: var(--gold); font-weight: 700; }
+    /* breakdown bars */
+    .demo-bars { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+    .db-row { display: flex; align-items: center; gap: 8px; }
+    .db-lbl {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.62rem;
+      color: var(--fog);
+      width: 60px;
+      flex-shrink: 0;
+      text-transform: uppercase;
+    }
+    .db-track {
+      flex: 1; height: 6px;
+      background: var(--bg3);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .db-fill {
+      height: 100%;
+      border-radius: 3px;
+      background: var(--gold3);
+      width: 0%;
+      transition: width 0.6s ease;
+    }
+    .db-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.62rem;
+      color: var(--snow2);
+      width: 38px;
+      text-align: right;
+    }
+    /* botões do demo */
+    .demo-controls { display: flex; gap: 10px; flex-wrap: wrap; }
+    .demo-btn {
+      padding: 8px 18px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border: 1px solid var(--seam);
+      background: var(--bg3);
+      color: var(--snow2);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s, background 0.2s;
+    }
+    .demo-btn:hover { border-color: var(--gold3); color: var(--snow); }
+    .demo-btn.primary {
+      border-color: var(--gold3);
+      color: var(--gold);
+      background: rgba(255,215,0,.06);
+    }
+    .demo-btn.primary:hover { background: rgba(255,215,0,.12); }
+    .demo-step-counter {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--fog);
+      align-self: center;
+    }
+    .demo-legend {
+      display: flex; gap: 16px; flex-wrap: wrap;
+      margin-bottom: 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.62rem;
+      color: var(--fog);
+    }
+    .demo-legend span { display: flex; align-items: center; gap: 5px; }
+    .demo-legend .dot {
+      width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0;
+    }
+
+    /* ── COMPARAÇÃO ──────────────────────── */
+    .compare-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 36px;
+      font-size: 0.88rem;
+    }
+    .compare-table th, .compare-table td {
+      padding: 14px 18px;
+      text-align: left;
+      border-bottom: 1px solid var(--seam);
+    }
+    .compare-table th {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--fog);
+      background: var(--bg3);
+    }
+    .compare-table td { color: var(--snow2); }
+    .compare-table td:first-child { color: var(--snow); font-weight: 600; }
+    .compare-table .mm-col { color: var(--gold2); }
+    .compare-table .ab-col { color: var(--silver); }
+    .compare-table tr:hover td { background: var(--bg3); }
+
+    /* ── FLUXO ───────────────────────────── */
+    .flow { display: flex; flex-direction: column; gap: 0; max-width: 700px; }
+
+    .flow-step {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+      position: relative;
+      padding-bottom: 28px;
+    }
+
+    .flow-step:not(:last-child)::before {
+      content: '';
+      position: absolute;
+      left: 19px; top: 40px;
+      width: 1px; bottom: 0;
+      background: var(--seam);
+    }
+
+    .flow-dot {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: var(--bg3);
+      border: 2px solid var(--gold3);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--gold);
+      flex-shrink: 0;
+      z-index: 1;
+    }
+
+    .flow-body { padding-top: 8px; }
+    .flow-title { font-weight: 700; font-size: 0.95rem; color: var(--snow); margin-bottom: 6px; }
+    .flow-text  { font-size: 0.88rem; color: var(--snow2); line-height: 1.65; }
+
+    /* ── PLY CARDS ───────────────────────── */
+    .ply-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 28px;
+    }
+
+    .ply-card {
+      background: var(--bg2);
+      border: 1px solid var(--seam);
+      border-radius: 6px;
+      padding: 16px 20px;
+      text-align: center;
+      min-width: 100px;
+      transition: background 0.2s;
+    }
+    .ply-card:hover { background: var(--bg3); }
+    .ply-icon { font-size: 1.3rem; margin-bottom: 6px; }
+    .ply-name { font-size: 0.82rem; color: var(--snow2); margin-bottom: 4px; }
+    .ply-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--gold);
+    }
+
+    /* ── PERGUNTAS & RESPOSTAS ───────────── */
+    .qa-list { display: flex; flex-direction: column; gap: 12px; }
+
+    .qa-item {
+      background: var(--bg2);
+      border: 1px solid var(--seam);
+      border-radius: 6px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .qa-item:hover { border-color: var(--gold3); }
+    .qa-item.open { border-color: var(--gold3); }
+
+    .qa-q {
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .qa-q-text { font-weight: 600; font-size: 0.92rem; color: var(--snow); }
+    .qa-arrow {
+      color: var(--gold3);
+      font-size: 1rem;
+      transition: transform 0.25s;
+      flex-shrink: 0;
+    }
+    .qa-item.open .qa-arrow { transform: rotate(180deg); }
+
+    .qa-a {
+      display: none;
+      padding: 0 20px 18px;
+      font-size: 0.88rem;
+      color: var(--snow2);
+      line-height: 1.7;
+      border-top: 1px solid var(--seam);
+      padding-top: 14px;
+    }
+    .qa-item.open .qa-a { display: block; }
+
+    /* ── REVEAL ──────────────────────────── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.55s ease, transform 0.55s ease;
+    }
+    .reveal.visible { opacity: 1; transform: none; }
+
+    /* ── FOOTER ──────────────────────────── */
+    footer {
+      background: var(--bg2);
+      border-top: 1px solid var(--seam);
+      text-align: center;
+      padding: 36px 32px;
+      font-size: 0.82rem;
+      color: var(--fog);
+    }
+    footer span { color: var(--gold3); }
+
+    /* ── CALLOUT ─────────────────────────── */
+    .callout {
+      background: rgba(255,215,0,0.04);
+      border: 1px solid var(--gold3);
+      border-radius: 6px;
+      padding: 18px 22px;
+      font-size: 0.9rem;
+      color: var(--snow2);
+      line-height: 1.7;
+      margin-bottom: 28px;
+    }
+    .callout strong { color: var(--gold); }
+    /* ══ EXPLORADORES INTERATIVOS ══════════════════════════════ */
+    .explorer-block {
+      background: var(--bg2);
+      border: 1px solid var(--seam);
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 36px 0;
+    }
+    .explorer-header {
+      background: var(--bg3);
+      border-bottom: 1px solid var(--seam);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .explorer-eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      color: var(--gold3);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .explorer-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--snow);
+    }
+    .explorer-body {
+      display: flex;
+      gap: 0;
+      flex-wrap: wrap;
+    }
+    .explorer-canvas-wrap {
+      flex: 1;
+      min-width: 280px;
+      padding: 20px;
+      border-right: 1px solid var(--seam);
+    }
+    .explorer-canvas {
+      display: block;
+      width: 100%;
+      max-width: 540px;
+      height: auto;
+      border-radius: 6px;
+      background: #0c0d14;
+    }
+    .explorer-controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+    .exp-btn {
+      padding: 7px 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border: 1px solid var(--seam);
+      background: var(--bg3);
+      color: var(--snow2);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .exp-btn:hover { border-color: var(--gold3); color: var(--snow); }
+    .exp-btn.primary { border-color: var(--gold3); color: var(--gold); background: rgba(255,215,0,.06); }
+    .exp-btn.primary:hover { background: rgba(255,215,0,.12); }
+    .exp-step-counter {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.62rem;
+      color: var(--fog);
+    }
+    /* pips */
+    .exp-pip-track {
+      display: flex;
+      gap: 5px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+    .exp-pip {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--seam);
+      cursor: pointer;
+      transition: background 0.2s, transform 0.2s;
+    }
+    .exp-pip.done { background: var(--gold3); }
+    .exp-pip.current { background: var(--gold); transform: scale(1.4); }
+    .exp-pip.prune-pip.done { background: #ef4444; }
+    .exp-pip.prune-pip.current { background: #ef4444; }
+    /* narrativa lateral */
+    .explorer-narrative {
+      width: 260px;
+      min-width: 220px;
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .exp-step-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      color: var(--gold3);
+      text-transform: uppercase;
+    }
+    .exp-step-msg {
+      font-size: 0.88rem;
+      color: var(--snow2);
+      line-height: 1.75;
+      min-height: 120px;
+    }
+    .exp-step-msg strong { color: var(--snow); }
+    .exp-step-msg .hi-max { color: var(--gold); font-weight: 700; }
+    .exp-step-msg .hi-min { color: var(--silver2); font-weight: 700; }
+    .exp-step-msg .hi-cut { color: #ef4444; font-weight: 700; }
+    .exp-step-msg .hi-ok  { color: #68d391; font-weight: 700; }
+    /* legenda */
+    .exp-legend {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      margin-top: auto;
+      padding-top: 16px;
+      border-top: 1px solid var(--seam);
+    }
+    .exp-leg-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.72rem;
+      color: var(--fog);
+    }
+    .exp-leg-dot {
+      width: 12px; height: 12px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    /* ══ CÓDIGO COLAPSÁVEL ══════════════════════════════════════ */
+    .code-toggle-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: none;
+      border: 1px solid var(--seam);
+      border-radius: 4px;
+      padding: 7px 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--fog);
+      cursor: pointer;
+      margin: 18px 0 0 0;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .code-toggle-btn:hover { border-color: var(--gold3); color: var(--snow2); }
+    .code-toggle-btn .ctb-icon { font-size: 0.8rem; transition: transform 0.25s; }
+    .code-toggle-btn.open .ctb-icon { transform: rotate(90deg); }
+    .code-wrap { overflow: hidden; transition: max-height 0.35s ease, opacity 0.25s ease; }
+    .code-wrap.collapsed { max-height: 0 !important; opacity: 0; margin: 0; }
+
+  </style>
+</head>
+<body>
+
+<!-- ══ HEADER ══════════════════════════════════════════════════ -->
+<header>
+  <div class="logo">ISOLATION · IA</div>
+  <nav>
+    <ul>
+      <li><a href="#jogo">O Jogo</a></li>
+      <li><a href="#representacao">Representação</a></li>
+      <li><a href="#minimax">Minimax</a></li>
+      <li><a href="#alfabeta">Alfa-Beta</a></li>
+      <li><a href="#heuristica">Heurística</a></li>
+      <li><a href="#comparacao">Comparação</a></li>
+      <li><a href="#perguntas">Perguntas</a></li>
+    </ul>
+  </nav>
+</header>
+
+<!-- ══ HERO ════════════════════════════════════════════════════ -->
+<div class="hero">
+  <div class="hero-badge">Inteligência Artificial e Computacional · IFTM Patrocínio</div>
+  <h1>ISOLATION</h1>
+  <p class="hero-sub">
+    Implementação de um agente inteligente para o jogo Isolation utilizando
+    busca competitiva com Minimax, Poda Alfa-Beta.
+  </p>
+
+  <div class="hero-chips">
+    <span class="chip gold">Minimax</span>
+    <span class="chip gold">Poda Alfa-Beta</span>
+    <span class="chip">Heurística de Liberdade Relativa</span>
+    <span class="chip">Move Ordering</span>
+    <span class="chip">IA vs IA</span>
+  </div>
+
+  <div class="hero-meta">
+    <div class="meta-item">
+      <div class="meta-label">Aluno</div>
+      <div class="meta-value" style="font-size:1rem">Arthur Xavier</div>
+    </div>
+    <div class="meta-item">
+      <div class="meta-label">Professora</div>
+      <div class="meta-value" style="font-size:1rem">Dra. Danielli Araújo</div>
+    </div>
+    <div class="meta-item">
+      <div class="meta-label">Tabuleiro</div>
+      <div class="meta-value">5×5 · 7×7 · 9×9</div>
+    </div>
+    <div class="meta-item">
+      <div class="meta-label">Algoritmos</div>
+      <div class="meta-value">2</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 01 — O JOGO ═════════════════════════════════════════════ -->
+<section class="section" id="jogo">
+  <p class="sec-label">01 — o jogo</p>
+  <h2 class="sec-title">O que é Isolation?</h2>
+  <p class="sec-desc">
+    Um duelo de isolamento estratégico em tabuleiro quadrado. Dois jogadores, dois peões.
+    O objetivo é simples e cruel: <strong style="color:var(--gold)">deixar o adversário sem movimento</strong>.
+  </p>
+
+  <div class="board-demo reveal">
+    <div>
+      <div class="mini-board">
+        <!-- linha 0 -->
+        <div class="mc p2"></div><div class="mc"></div><div class="mc"></div><div class="mc"></div><div class="mc"></div>
+        <!-- linha 1 -->
+        <div class="mc"></div><div class="mc blocked"></div><div class="mc"></div><div class="mc"></div><div class="mc"></div>
+        <!-- linha 2 -->
+        <div class="mc"></div><div class="mc"></div><div class="mc blocked"></div><div class="mc"></div><div class="mc blocked"></div>
+        <!-- linha 3 -->
+        <div class="mc"></div><div class="mc"></div><div class="mc"></div><div class="mc blocked"></div><div class="mc"></div>
+        <!-- linha 4 -->
+        <div class="mc"></div><div class="mc"></div><div class="mc p1"></div><div class="mc"></div><div class="mc"></div>
+      </div>
+      <p style="font-size:0.72rem;color:var(--fog);text-align:center;margin-top:10px;font-family:'JetBrains Mono',monospace">estado intermediário</p>
+    </div>
+
+    <div class="board-legend">
+      <p>A cada turno, o jogador faz <strong style="color:var(--snow)">duas ações obrigatórias:</strong></p>
+      <div class="leg-item"><div class="leg-dot leg-gold"></div><span><strong style="color:var(--gold)">PLAYER 1</strong>: peão dourado</span></div>
+      <div class="leg-item"><div class="leg-dot leg-silver"></div><span><strong style="color:var(--silver)">PLAYER 2 (IA)</strong>: peão prata</span></div>
+      <div class="leg-item"><div class="leg-dot leg-black"></div><span>Casa bloqueada, permanente</span></div>
+    </div>
+  </div>
+
+  <div class="rules-grid reveal" style="margin-top:32px">
+    <div class="rule-card">
+      <div class="rule-num">REGRA 01</div>
+      <div class="rule-title">Movimento de Rei</div>
+      <div class="rule-body">O peão se move exatamente 1 casa em qualquer direção, reto ou diagonal. Igual ao rei do xadrez. São 8 direções possíveis.</div>
+    </div>
+    <div class="rule-card">
+      <div class="rule-num">REGRA 02</div>
+      <div class="rule-title">Bloqueio Manual</div>
+      <div class="rule-body">Depois de mover, o jogador escolhe qualquer casa vazia do tabuleiro para bloquear permanentemente. É como "queimar" uma passagem.</div>
+    </div>
+    <div class="rule-card">
+      <div class="rule-num">REGRA 03</div>
+      <div class="rule-title">Turnos Alternados</div>
+      <div class="rule-body">Humano e IA se revezam. Cada turno = 1 movimento + 1 bloqueio. Sem exceção.</div>
+    </div>
+    <div class="rule-card">
+      <div class="rule-num">REGRA 04</div>
+      <div class="rule-title">Condição de Vitória</div>
+      <div class="rule-body">Perde quem não tiver para onde mover seu peão. Quem isolar o adversário primeiro, vence.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 02 — REPRESENTAÇÃO ═══════════════════════════════════════ -->
+<section class="section" id="representacao">
+  <p class="sec-label">02 — estrutura de dados</p>
+  <h2 class="sec-title">Representação do Tabuleiro</h2>
+  <p class="sec-desc">
+    O computador não "enxerga" o tabuleiro como nós. Para ele, é uma grade de números, uma matriz.
+    Cada posição guarda um valor que indica o estado daquela casa.
+  </p>
+
+  <div class="matrix-demo reveal">
+    <div>
+      <div class="matrix-grid">
+        <div class="mx v3">3</div><div class="mx v0">0</div><div class="mx v0">0</div><div class="mx v0">0</div><div class="mx v0">0</div>
+        <div class="mx v0">0</div><div class="mx v1">1</div><div class="mx v0">0</div><div class="mx v0">0</div><div class="mx v0">0</div>
+        <div class="mx v0">0</div><div class="mx v0">0</div><div class="mx v1">1</div><div class="mx v0">0</div><div class="mx v1">1</div>
+        <div class="mx v0">0</div><div class="mx v0">0</div><div class="mx v0">0</div><div class="mx v1">1</div><div class="mx v0">0</div>
+        <div class="mx v0">0</div><div class="mx v0">0</div><div class="mx v2">2</div><div class="mx v0">0</div><div class="mx v0">0</div>
+      </div>
+      <p style="font-size:0.7rem;color:var(--fog);text-align:center;margin-top:10px;font-family:'JetBrains Mono',monospace">board[5][5]: valores inteiros</p>
+    </div>
+
+    <div class="matrix-legend">
+      <p style="margin-bottom:14px">Cada célula armazena um inteiro, simples e eficiente:</p>
+      <div class="ml"><div class="ml-box" style="background:var(--bg3);color:var(--fog)">0</div><span><code style="color:var(--gold3)">EMPTY</code>: casa livre, pode ser usada</span></div>
+      <div class="ml"><div class="ml-box" style="background:#0a0b10;color:#2a2d3a">1</div><span><code style="color:var(--gold3)">BLOCKED</code>: permanentemente bloqueada</span></div>
+      <div class="ml"><div class="ml-box" style="background:rgba(255,215,0,0.1);color:var(--gold);border-color:var(--gold3)">2</div><span><code style="color:var(--gold3)">P1</code>: posição do humano (ouro)</span></div>
+      <div class="ml"><div class="ml-box" style="background:rgba(232,232,232,0.07);color:var(--silver);border-color:var(--silver2)">3</div><span><code style="color:var(--gold3)">P2</code>: posição da IA (prata)</span></div>
+    </div>
+  </div>
+
+  <button class="code-toggle-btn" onclick="toggleCode('cw1', this)" aria-expanded="false">
+  <span class="ctb-icon">▶</span> VER CÓDIGO: isolation.html — Constantes e Estado
+</button>
+<div class="code-wrap reveal collapsed" id="cw1">
+    <div class="code-header">
+      <span class="code-title">isolation.html — Constantes e Estado</span>
+      <span class="code-tag">representação</span>
+    </div>
+    <pre><span class="cm">// As 4 constantes que definem o "vocabulário" do tabuleiro</span>
+<span class="kw">const</span> <span class="hi">EMPTY</span>=<span class="num">0</span>, <span class="hi">BLOCKED</span>=<span class="num">1</span>, <span class="hi">P1</span>=<span class="num">2</span>, <span class="hi">P2</span>=<span class="num">3</span>;
+
+<span class="cm">// A "memória" do jogo — tudo que precisa ser conhecido a cada instante</span>
+<span class="kw">let</span> board=[];               <span class="cm">// a matriz principal: board[linha][coluna]</span>
+<span class="kw">let</span> posP1=[<span class="num">0</span>,<span class="num">3</span>], posP2=[<span class="num">6</span>,<span class="num">3</span>]; <span class="cm">// onde cada peão está: [linha, coluna]</span>
+<span class="kw">let</span> curTurn=<span class="str">'p1'</span>;          <span class="cm">// de quem é a vez: 'p1'=humano, 'p2'=IA</span>
+<span class="kw">let</span> difficulty=<span class="num">2</span>;          <span class="cm">// PLY = quantas jogadas à frente a IA olha</span>
+<span class="kw">let</span> algo=<span class="str">'alfabeta'</span>;        <span class="cm">// algoritmo ativo: 'minimax' ou 'alfabeta'</span></pre>
+  </div>
+
+  <button class="code-toggle-btn" onclick="toggleCode('cw-gvm', this)" aria-expanded="false"><span class="ctb-icon">▶</span> VER CÓDIGO: getValidMoves(r, c)</button>
+  <div class="code-wrap reveal collapsed" id="cw-gvm">
+    <div class="code-header">
+      <span class="code-title">getValidMoves(r, c) — Movimentos Válidos</span>
+      <span class="code-tag">regras de movimento</span>
+    </div>
+    <pre><span class="cm">// Dado onde o peão está, retorna todas as casas para onde ele pode ir</span>
+<span class="kw">function</span> <span class="fn">getValidMoves</span>(r, c){
+  <span class="cm">// as 8 direções do rei: cima, baixo, esquerda, direita + 4 diagonais</span>
+  <span class="kw">const</span> dirs=[[-<span class="num">1</span>,<span class="num">0</span>],[<span class="num">1</span>,<span class="num">0</span>],[<span class="num">0</span>,-<span class="num">1</span>],[<span class="num">0</span>,<span class="num">1</span>],[-<span class="num">1</span>,-<span class="num">1</span>],[-<span class="num">1</span>,<span class="num">1</span>],[<span class="num">1</span>,-<span class="num">1</span>],[<span class="num">1</span>,<span class="num">1</span>]];
+  <span class="kw">const</span> moves=[];
+  <span class="kw">for</span>(<span class="kw">const</span> [dr,dc] <span class="kw">of</span> dirs){
+    <span class="kw">const</span> nr=r+dr, nc=c+dc;
+    <span class="cm">// aceita a casa só se: está dentro do tabuleiro E está vazia</span>
+    <span class="kw">if</span>(nr>=<span class="num">0</span>&&nr&lt;ROWS&&nc>=<span class="num">0</span>&&nc&lt;COLS&&board[nr][nc]===<span class="hi">EMPTY</span>){
+      moves.push([nr,nc]);
+    }
+  }
+  <span class="kw">return</span> moves; <span class="cm">// lista vazia = sem movimentos = derrota</span>
+}</pre>
+  </div>
+</section>
+
+<!-- ══ 03 — MINIMAX ═════════════════════════════════════════════ -->
+<section class="section" id="minimax">
+  <p class="sec-label">03 — busca competitiva</p>
+  <h2 class="sec-title">Algoritmo Minimax</h2>
+  <p class="sec-desc">
+    O Minimax resolve uma pergunta simples: qual é a melhor jogada quando o adversário também está jogando bem? A IA simula o futuro, avalia todas as possibilidades até um certo limite, e escolhe o caminho que garante o melhor resultado possível.
+  </p>
+
+  <div class="callout reveal">
+    Nos níveis <strong style="color:var(--gold)">MAX</strong>, a IA escolhe o movimento de maior pontuação. Nos níveis <strong style="color:var(--silver2)">MIN</strong>, o adversário escolhe o de menor pontuação. Quando a busca chega ao fundo, a heurística avalia o estado e devolve um número. Esse número sobe pela árvore até a raiz, onde a IA toma a decisão final.
+  </div>
+
+  <!-- EXPLORADOR INTERATIVO MINIMAX -->
+  <div class="explorer-block reveal">
+    <div class="explorer-header">
+      <div>
+        <div class="explorer-eyebrow">Visualização passo a passo</div>
+        <div class="explorer-title">⚙ Como o Minimax percorre a árvore</div>
+      </div>
+    </div>
+    <div class="explorer-body">
+      <div class="explorer-canvas-wrap">
+        <canvas class="explorer-canvas" id="mm-canvas" width="540" height="310"></canvas>
+        <div class="explorer-controls">
+          <button class="exp-btn" onclick="explorerReset('mm')">↺ REINICIAR</button>
+          <button class="exp-btn primary" onclick="explorerStep('mm')">AVANÇAR ▶</button>
+          <span class="exp-step-counter" id="mm-counter">PASSO 1 / 8</span>
+        </div>
+        <div class="exp-pip-track" id="mm-pips"></div>
+      </div>
+      <div class="explorer-narrative">
+        <div class="exp-step-label" id="mm-step-label">Pronto para começar</div>
+        <div class="exp-step-msg" id="mm-stepinfo">
+          Clique em <strong>AVANÇAR</strong> para ver o Minimax percorrer a árvore nó por nó.<br><br>
+          Cada nó representa um estado possível do jogo. A IA desce até o fundo e sobe com os valores.
+        </div>
+        <div class="exp-legend">
+          <div class="exp-leg-row"><div class="exp-leg-dot" style="background:#ffd700"></div> Nó ativo no momento</div>
+          <div class="exp-leg-row"><div class="exp-leg-dot" style="background:#2a1e00;border:1px solid #ffd700"></div> Nó calculado (valor definido)</div>
+          <div class="exp-leg-row"><div class="exp-leg-dot" style="background:#14161f;border:1px solid #3a3f50"></div> Folha — avaliada pela heurística</div>
+          <div class="exp-leg-row"><div class="exp-leg-dot" style="background:#1a1c26;border:1px solid #2a2d3a"></div> Nó ainda não visitado</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+ <button class="code-toggle-btn" onclick="toggleCode('cw2', this)" aria-expanded="false">
+  <span class="ctb-icon">▶</span> VER CÓDIGO: minimax(depth, maximizing, aiPl)
+</button>
+<div class="code-wrap reveal collapsed" id="cw2">
+  <div class="code-header">
+    <span class="code-title">minimax(depth, maximizing, aiPl)</span>
+    <span class="code-tag">etapa 1 do trabalho</span>
+  </div>
+
+  <pre><span class="kw">function</span> <span class="fn">minimax</span>(depth, maximizing, aiPl){
+
+  <span class="hi">nodesVisited</span>++;
+  <span class="cm">// contabiliza nós explorados</span>
+
+  <span class="cm">// cutoff por limite de nós e tempo</span>
+  <span class="kw">if</span>(<span class="hi">nodesVisited</span> &gt;= _searchCtx.nodeLimit) <span class="kw">return</span> <span class="fn">heuristic</span>(aiPl);
+  <span class="kw">if</span>(performance.now() - _searchCtx.startTime &gt;= <span class="hi">TIME_LIMIT_MS</span>) <span class="kw">return</span> <span class="fn">heuristic</span>(aiPl);
+
+  <span class="kw">const</span> mvs = <span class="fn">getValidMoves</span>(pos[<span class="num">0</span>], pos[<span class="num">1</span>]);
+  <span class="cm">// movimentos possíveis do jogador atual</span>
+
+  <span class="kw">if</span>(depth === <span class="num">0</span> || mvs.length === <span class="num">0</span>) <span class="kw">return</span> <span class="fn">heuristic</span>(aiPl);
+  <span class="cm">// caso base da recursão</span>
+
+  <span class="kw">if</span>(maximizing){
+
+    <span class="kw">let</span> best = -Infinity;
+    <span class="cm">// MAX tenta maximizar score</span>
+
+    <span class="kw">for</span>(<span class="kw">const</span> [nr,nc] <span class="kw">of</span> mvs){
+
+      <span class="fn">applyMoveOnly</span>(cur, ...move);
+      <span class="cm">// fase 1: move peça</span>
+
+      <span class="kw">const</span> cands = <span class="fn">getBlockCandidatesAI</span>(aiPl);
+
+      <span class="kw">for</span>(<span class="kw">const</span> [br,bc] <span class="kw">of</span> cands){
+
+        <span class="fn">applyBlock</span>(br, bc);
+        <span class="cm">// fase 2: bloqueia casa</span>
+
+        best = Math.max(best, <span class="fn">minimax</span>(depth-<span class="num">1</span>, <span class="kw">false</span>, aiPl));
+        <span class="cm">// simula próximo turno</span>
+
+        board[br][bc] = <span class="hi">EMPTY</span>;
+        <span class="cm">// desfaz bloqueio</span>
+      }
+
+      <span class="fn">undoMoveInline</span>(cur, ...move);
+      <span class="cm">// backtracking sem copiar tabuleiro</span>
+    }
+
+    <span class="kw">return</span> best;
+
+  } <span class="kw">else</span> {
+
+    <span class="kw">let</span> best = +Infinity;
+    <span class="cm">// MIN tenta minimizar score</span>
+
+    <span class="kw">for</span>(<span class="kw">const</span> [nr,nc] <span class="kw">of</span> mvs){
+
+      <span class="fn">applyMoveOnly</span>(cur, ...move);
+
+      <span class="kw">const</span> cands = <span class="fn">getBlockCandidatesAI</span>(aiPl);
+
+      <span class="kw">for</span>(<span class="kw">const</span> [br,bc] <span class="kw">of</span> cands){
+
+        <span class="fn">applyBlock</span>(br, bc);
+
+        best = Math.min(best, <span class="fn">minimax</span>(depth-<span class="num">1</span>, <span class="kw">true</span>, aiPl));
+        <span class="cm">// adversário reduz valor da jogada</span>
+
+        board[br][bc] = <span class="hi">EMPTY</span>;
+      }
+
+      <span class="fn">undoMoveInline</span>(cur, ...move);
+    }
+
+    <span class="kw">return</span> best;
+  }
+
+} <span class="cm">// complexidade: O((b_mov × b_blk)^d)</span></pre>
+</div>
+
+  <div class="callout reveal" style="margin-top:32px">
+    <strong>O que é PLY?</strong> PLY é quantas jogadas à frente a IA consegue simular antes de avaliar. Imagine que você pensa: "Se eu for aqui, o adversário vai para lá, aí eu posso fazer isso." Isso seria PLY 3 — três jogadas simuladas em sequência.<br><br>
+    <strong>PLY 1:</strong> a IA enxerga só o próximo movimento, o dela. Rápida, mas ingênua.<br>
+    <strong>PLY 2:</strong> enxerga o próprio movimento e a resposta do adversário. Já pensa estrategicamente.<br>
+    <strong>PLY 3:</strong> enxerga mais um nível além, a própria resposta à resposta do adversário. Mais inteligente, mais lenta.<br><br>
+    Cada nível extra multiplica o trabalho pelo número de movimentos possíveis. Para evitar travamento, o jogo limita a busca: 500 estados no fácil, 2000 no médio e 6000 no difícil, com corte de tempo em 1200ms. Se o limite for atingido antes de terminar, a IA usa a melhor jogada encontrada até ali.
+  </div>
+
+  <div class="ply-row reveal">
+    <div class="ply-card"><div class="ply-icon">🟢</div><div class="ply-name">Fácil</div><div class="ply-val">PLY = 1</div></div>
+    <div class="ply-card"><div class="ply-icon">🟡</div><div class="ply-name">Médio</div><div class="ply-val">PLY = 2</div></div>
+    <div class="ply-card"><div class="ply-icon">🔴</div><div class="ply-name">Difícil</div><div class="ply-val">PLY = 3</div></div>
+  </div>
+</section>
+
+<!-- ══ 04 — ALFA-BETA ══════════════════════════════════════════ -->
+<section class="section" id="alfabeta">
+  <p class="sec-label">04 — otimização</p>
+  <h2 class="sec-title">Poda Alfa-Beta</h2>
+  <p class="sec-desc">
+    A Poda Alfa-Beta produz exatamente a mesma decisão que o Minimax, descartando os ramos que provadamente não mudariam o resultado. Menos trabalho, mesma resposta.
+  </p>
+
+  <div class="callout reveal">
+    A busca mantém dois valores: <strong style="color:var(--gold)">alpha</strong>, o melhor resultado que a IA já encontrou em algum ramo explorado, e <strong style="color:var(--silver2)">beta</strong>, o melhor resultado que o adversário já encontrou. Quando beta fica menor ou igual a alpha, o ramo atual é cortado.<br><br>
+    Por que funciona? Se a IA já garantiu +7 por outro caminho, e o ramo atual mostra que o adversário consegue forçar no máximo +3, esse ramo nunca seria escolhido de qualquer forma. Não importa o que o resto contenha. No melhor caso, isso reduz o trabalho à raiz quadrada do Minimax.
+  </div>
+
+  <div class="callout reveal" style="margin-top:18px">
+    <strong>A ordem dos movimentos amplifica as podas.</strong> Quanto melhor o movimento testado primeiro, mais cedo o corte acontece. Por isso, antes de descer na árvore, os movimentos são ordenados: prioridade para jogadas que isolam imediatamente o adversário, depois as que ampliam a liberdade da IA e reduzem a do oponente. Isso garante que cada poda elimine o máximo de ramos.
+  </div>
+
+  <!-- EXPLORADOR INTERATIVO ALFA-BETA -->
+  <div class="explorer-block reveal">
+    <div class="explorer-header">
+      <div>
+        <div class="explorer-eyebrow">Visualização passo a passo</div>
+        <div class="explorer-title">✂ Como a Poda Alfa-Beta descarta ramos</div>
+      </div>
+    </div>
+    <div class="explorer-body">
+      <div class="explorer-canvas-wrap">
+        <canvas class="explorer-canvas" id="ab-canvas" width="540" height="310"></canvas>
+        <div class="explorer-controls">
+          <button class="exp-btn" onclick="explorerReset('ab')">↺ REINICIAR</button>
+          <button class="exp-btn primary" onclick="explorerStep('ab')">AVANÇAR ▶</button>
+          <span class="exp-step-counter" id="ab-counter">PASSO 1 / 10</span>
+        </div>
+        <div class="exp-pip-track" id="ab-pips"></div>
+      </div>
+      <div class="explorer-narrative">
+        <div class="exp-step-label" id="ab-step-label">Pronto para começar</div>
+        <div class="exp-step-msg" id="ab-stepinfo">
+          Clique em <strong>AVANÇAR</strong> para ver o Alfa-Beta percorrer a mesma árvore do Minimax — mas descartando ramos que nunca mudariam a decisão.<br><br>
+          Observe o momento exato em que a poda acontece.
+        </div>
+        <div class="exp-legend">
+          <div class="exp-leg-row"><div class="exp-leg-dot" style="background:#ffd700"></div> Nó ativo agora</div>
+          <div class="exp-leg-row"><div class="exp-leg-dot" style="background:#2a1e00;border:1px solid #ffd700"></div> Nó calculado</div>
+          <div class="exp-leg-row"><div class="exp-leg-dot" style="background:#34d391;border-radius:50%;width:8px;height:8px;display:inline-block"></div> Janela α / β ativa</div>
+          <div class="exp-leg-row"><div class="exp-leg-dot" style="background:#ef4444"></div> Ramo podado ✂</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <button class="code-toggle-btn" onclick="toggleCode('cw3', this)" aria-expanded="false">
+  <span class="ctb-icon">▶</span> VER CÓDIGO: alphabeta(depth, alpha, beta, maximizing, aiPl)
+</button>
+<div class="code-wrap reveal collapsed" id="cw3">
+  <div class="code-header">
+    <span class="code-title">alphabeta(depth, alpha, beta, maximizing, aiPl)</span>
+    <span class="code-tag">etapa 2 do trabalho</span>
+  </div>
+
+  <pre><span class="kw">function</span> <span class="fn">alphabeta</span>(depth, <span class="hi2">alpha</span>, <span class="hi3">beta</span>, maximizing, aiPl){
+
+  <span class="hi">abNodes</span>++;
+  <span class="cm">// conta quantos estados da árvore foram analisados</span>
+
+  <span class="cm">// limita busca para evitar travamentos</span>
+  <span class="kw">if</span>(<span class="hi">abNodes</span> &gt;= _searchCtx.nodeLimit) <span class="kw">return</span> <span class="fn">heuristic</span>(aiPl);
+  <span class="kw">if</span>(performance.now() - _searchCtx.startTime &gt;= <span class="hi">TIME_LIMIT_MS</span>) <span class="kw">return</span> <span class="fn">heuristic</span>(aiPl);
+
+  <span class="kw">const</span> rawMoves = <span class="fn">getValidMoves</span>(pos[<span class="num">0</span>], pos[<span class="num">1</span>]);
+  <span class="cm">// pega todos os movimentos possíveis</span>
+
+  <span class="kw">if</span>(depth === <span class="num">0</span> || rawMoves.length === <span class="num">0</span>) <span class="kw">return</span> <span class="fn">heuristic</span>(aiPl);
+  <span class="cm">// para recursão e avalia posição atual</span>
+
+  <span class="cm">// tenta analisar melhores jogadas primeiro</span>
+  <span class="cm">// isso aumenta muito a chance de poda</span>
+  <span class="kw">const</span> mvs = depth &gt;= <span class="num">2</span> ? <span class="fn">orderMoves</span>(rawMoves, cur, aiPl) : rawMoves;
+
+  <span class="kw">if</span>(maximizing){
+
+    <span class="kw">let</span> best = -Infinity;
+    <span class="cm">// MAX procura maior valor possível</span>
+
+    <span class="kw">for</span>(<span class="kw">const</span> [nr,nc] <span class="kw">of</span> mvs){
+
+      <span class="fn">applyMoveOnly</span>(cur, ...move);
+      <span class="cm">// simula movimento no tabuleiro</span>
+
+      <span class="kw">for</span>(<span class="kw">const</span> [br,bc] <span class="kw">of</span> <span class="fn">getBlockCandidatesAI</span>(aiPl)){
+
+        <span class="fn">applyBlock</span>(br, bc);
+        <span class="cm">// simula bloqueio da casa</span>
+
+        <span class="kw">const</span> v = <span class="fn">alphabeta</span>(depth-<span class="num">1</span>, <span class="hi2">alpha</span>, <span class="hi3">beta</span>, <span class="kw">false</span>, aiPl);
+        <span class="cm">// analisa próximo turno recursivamente</span>
+
+        board[br][bc] = <span class="hi">EMPTY</span>;
+        <span class="cm">// desfaz bloqueio para testar outro cenário</span>
+
+        best = Math.max(best, v);
+        <span class="cm">// guarda melhor jogada encontrada</span>
+
+        <span class="hi2">alpha</span> = Math.max(<span class="hi2">alpha</span>, best);
+        <span class="cm">// atualiza melhor valor garantido para MAX</span>
+
+        <span class="kw">if</span>(<span class="hi3">beta</span> &lt;= <span class="hi2">alpha</span>){
+          <span class="hi">pruneCount</span>++;
+          <span class="kw">break</span>;
+        }
+        <span class="cm">// poda: restante desse ramo não muda decisão final</span>
+      }
+
+      <span class="fn">undoMoveInline</span>(cur, ...move);
+      <span class="cm">// volta tabuleiro ao estado original</span>
+    }
+
+    <span class="kw">return</span> best;
+
+  } <span class="kw">else</span> {
+
+    <span class="kw">let</span> best = +Infinity;
+    <span class="cm">// MIN tenta achar menor valor possível</span>
+
+    <span class="kw">for</span>(<span class="kw">const</span> [nr,nc] <span class="kw">of</span> mvs){
+
+      <span class="fn">applyMoveOnly</span>(cur, ...move);
+
+      <span class="kw">for</span>(<span class="kw">const</span> [br,bc] <span class="kw">of</span> <span class="fn">getBlockCandidatesAI</span>(aiPl)){
+
+        <span class="fn">applyBlock</span>(br, bc);
+
+        <span class="kw">const</span> v = <span class="fn">alphabeta</span>(depth-<span class="num">1</span>, <span class="hi2">alpha</span>, <span class="hi3">beta</span>, <span class="kw">true</span>, aiPl);
+
+        board[br][bc] = <span class="hi">EMPTY</span>;
+
+        best = Math.min(best, v);
+        <span class="cm">// adversário tenta piorar jogada da IA</span>
+
+        <span class="hi3">beta</span> = Math.min(<span class="hi3">beta</span>, best);
+        <span class="cm">// atualiza menor valor garantido do MIN</span>
+
+        <span class="kw">if</span>(<span class="hi3">beta</span> &lt;= <span class="hi2">alpha</span>){
+          <span class="hi">pruneCount</span>++;
+          <span class="kw">break</span>;
+        }
+        <span class="cm">// se esse ramo já é pior, não precisa continuar analisando</span>
+      }
+
+      <span class="fn">undoMoveInline</span>(cur, ...move);
+      <span class="cm">// desfaz alterações do cenário atual</span>
+    }
+
+    <span class="kw">return</span> best;
+  }
+
+} <span class="cm">// melhor caso: O(b^(d/2))</span>
+<span class="cm">// muito menos estados analisados que o Minimax puro</span></pre>
+</div>
+</section>
+
+<!-- ══ 05 — HEURÍSTICA ══════════════════════════════════════════ -->
+<section class="section" id="heuristica">
+  <p class="sec-label">05 — função de avaliação</p>
+  <h2 class="sec-title">Heurística de Liberdade Relativa</h2>
+  <p class="sec-desc">
+    Quando o algoritmo chega ao limite de profundidade sem vitória ou derrota, precisa de um número que diga qual estado é melhor para a IA. A heurística fornece esse número: positivo significa vantagem da IA, negativo significa vantagem do adversário. Este projeto combina <strong style="color:var(--gold)">cinco fatores</strong>, cada um pesado por importância.
+  </p>
+
+  <div class="callout reveal">
+    <strong>Por que fatores de refinamento?</strong> A Liberdade Relativa é o critério central — com peso 0.55, ela domina a decisão. Os quatro fatores restantes existem para corrigir casos onde ela sozinha seria ingênua: mobilidade imediata evita armadilhas de curto prazo, centralidade penaliza bordas, trap e auto-isolamento evitam que a IA se encurrale ao perseguir o adversário. Nenhum fator secundário compete com a Liberdade Relativa — eles a refinam.
+  </div>
+
+  <div class="formula-box reveal">
+    <div class="formula-main" style="font-size:1.05rem">
+      <span class="f-var">H(s)</span>
+      <span class="f-op"> = </span>
+      <span class="f-op">0.55·</span><span class="f-var">LibRel</span>
+      <span class="f-op"> + </span>
+      <span class="f-op">0.25·</span><span class="f-var">Mob</span>
+      <span class="f-op"> + </span>
+      <span class="f-op">0.10·</span><span class="f-var">Centr</span>
+      <span class="f-op"> + </span>
+      <span class="f-op">0.07·</span><span class="f-var">Trap</span>
+      <span class="f-op"> − </span>
+      <span class="f-op">0.03·</span><span class="f-var">AutoIso</span>
+    </div>
+    <div class="formula-sub"> pesos somam |1.0| em valor absoluto · escala final ×100</div>
+  </div>
+
+  <div class="heu-grid reveal">
+    <div class="heu-card l1">
+      <div class="heu-tag">F1 — peso 0.55</div>
+      <div class="heu-title">Liberdade Relativa</div>
+      <div class="heu-body">Para cada movimento possível, soma quantos movimentos aquele destino ainda preserva — olha <strong>dois níveis</strong> à frente. Evita posições que parecem abertas mas levam a becos.</div>
+      <div class="heu-formula">(Σmoves(dest_IA) − Σmoves(dest_adv)) / 64</div>
+    </div>
+    <div class="heu-card l2">
+      <div class="heu-tag">F2 — peso 0.25</div>
+      <div class="heu-title">Mobilidade Imediata</div>
+      <div class="heu-body">Diferença pura entre movimentos da IA e do adversário <em>agora</em>. Heurística clássica de Isolation, complementar ao Fator 1.</div>
+      <div class="heu-formula">(|moves(IA)| − |moves(adv)|) / 8</div>
+    </div>
+    <div class="heu-card l1">
+      <div class="heu-tag">F3 — peso 0.10</div>
+      <div class="heu-title">Centralidade</div>
+      <div class="heu-body">Posições centrais oferecem mais rotas de fuga e ângulos de bloqueio. Mede distância Chebyshev ao centro do tabuleiro.</div>
+      <div class="heu-formula">(d_chebyshev(adv) − d_chebyshev(IA)) / d_max</div>
+    </div>
+    <div class="heu-card l2">
+      <div class="heu-tag">F4 — peso 0.07</div>
+      <div class="heu-title">Trap Potential</div>
+      <div class="heu-body">Para cada destino possível do adversário, conta vizinhos já bloqueados ou ocupados. Normalizado para [−1,+1] — recentrado para equiparar a escala dos demais fatores.</div>
+      <div class="heu-formula">((Σbloq(dest_adv)/movs/8) − 0.5) × 2</div>
+    </div>
+    <div class="heu-card l1">
+      <div class="heu-tag">F5 — penalidade 0.03</div>
+      <div class="heu-title">Auto-Isolamento</div>
+      <div class="heu-body">Versão simétrica de F4 voltada para a própria IA: penaliza posições em que os próprios destinos da IA já estão apertados. Evita que a IA se enfie em becos sem saída ao perseguir o adversário.</div>
+      <div class="heu-formula">Σ vizinhosBloq(dest_IA) / (8 × |moves(IA)|)  <span style="color:var(--silver2)">// subtraído</span></div>
+    </div>
+    <div class="heu-card lt">
+      <div class="heu-tag">T — Casos Terminais</div>
+      <div class="heu-title">Vitória e Derrota</div>
+      <div class="heu-body">Detectados <strong>antes</strong> de qualquer cálculo heurístico. Valores extremos garantem que vencer é sempre prioridade absoluta sobre qualquer ganho posicional.</div>
+      <div class="heu-formula">moves(adv)=0 → +10000 | moves(IA)=0 → −10000</div>
+    </div>
+  </div><!-- fim heu-grid -->
+
+  <!-- ══ DEMO INTERATIVO — LIBERDADE RELATIVA ══════════════════ -->
+  <div class="demo-wrap reveal" id="demo-section">
+    <div class="demo-title">Visualização Interativa</div>
+    <div class="demo-heading">Como a Heurística Pensa — Passo a Passo</div>
+    <div class="demo-body">
+
+      <!-- Tabuleiro 5×5 -->
+      <div>
+        <div class="demo-legend">
+          <span><div class="dot" style="background:var(--gold);"></div> Player 1</span>
+          <span><div class="dot" style="background:#b0b8c8;"></div> IA (Player 2)</span>
+          <span><div class="dot" style="background:#1a3012;"></div> + liberdade futura</span>
+          <span><div class="dot" style="background:#200e0e;"></div> − liberdade futura</span>
+          <span><div class="dot" style="background:#07080d;border:1px solid #111;"></div> bloqueada</span>
+        </div>
+        <div id="demo-board"></div>
+      </div>
+
+      <!-- Painel de explicação -->
+      <div class="demo-panel">
+        <div class="demo-step-title" id="demo-step-label">PASSO 1 / 5</div>
+        <div class="demo-step-text" id="demo-step-text">
+          Clique em <strong>AVANÇAR</strong> para ver a heurística raciocinar sobre este estado do tabuleiro.
+        </div>
+
+        <!-- Breakdown dos fatores -->
+        <div class="demo-bars" id="demo-bars" style="display:none">
+          <div class="db-row">
+            <span class="db-lbl">LibRel</span>
+            <div class="db-track"><div class="db-fill" id="db-lib" style="background:#ffd700"></div></div>
+            <span class="db-val" id="dbv-lib">—</span>
+          </div>
+          <div class="db-row">
+            <span class="db-lbl">Mob.</span>
+            <div class="db-track"><div class="db-fill" id="db-mob" style="background:#ffb300"></div></div>
+            <span class="db-val" id="dbv-mob">—</span>
+          </div>
+          <div class="db-row">
+            <span class="db-lbl">Centr.</span>
+            <div class="db-track"><div class="db-fill" id="db-cen" style="background:#b0b8c8"></div></div>
+            <span class="db-val" id="dbv-cen">—</span>
+          </div>
+          <div class="db-row">
+            <span class="db-lbl">Trap</span>
+            <div class="db-track"><div class="db-fill" id="db-trap" style="background:#68d391"></div></div>
+            <span class="db-val" id="dbv-trap">—</span>
+          </div>
+          <div class="db-row">
+            <span class="db-lbl">AutoIso</span>
+            <div class="db-track"><div class="db-fill" id="db-iso" style="background:#fc8181"></div></div>
+            <span class="db-val" id="dbv-iso">—</span>
+          </div>
+          <div class="db-row" style="margin-top:4px;border-top:1px solid var(--seam);padding-top:8px">
+            <span class="db-lbl" style="color:var(--gold)">SCORE</span>
+            <div class="db-track"><div class="db-fill" id="db-total" style="background:var(--gold)"></div></div>
+            <span class="db-val" id="dbv-total" style="color:var(--gold)">—</span>
+          </div>
+        </div>
+
+        <div class="demo-controls">
+          <button class="demo-btn" onclick="demoReset()">↺ REINICIAR</button>
+          <button class="demo-btn primary" id="demo-next-btn" onclick="demoNext()">AVANÇAR ▶</button>
+          <span class="demo-step-counter" id="demo-counter">0 / 5</span>
+        </div>
+      </div>
+    </div>
+  </div><!-- fim demo-wrap -->
+
+ <button class="code-toggle-btn" onclick="toggleCode('cw4', this)" aria-expanded="false">
+  <span class="ctb-icon">▶</span> VER CÓDIGO: heuristic(aiPl) — Composição dos 5 fatores
+</button>
+<div class="code-wrap reveal collapsed" id="cw4">
+  <div class="code-header">
+    <span class="code-title">heuristic(aiPl) — Composição dos 5 fatores</span>
+    <span class="code-tag">função de avaliação</span>
+  </div>
+
+  <pre><span class="kw">const</span> <span class="hi">HEU_W</span> = {
+  lib:<span class="num">0.55</span>,  <span class="cm">// fator principal e dominante</span>
+  mob:<span class="num">0.25</span>,
+  cen:<span class="num">0.10</span>,
+  trap:<span class="num">0.07</span>,
+  iso:<span class="num">0.03</span>
+};
+<span class="cm">// pesos de importância de cada fator</span>
+
+<span class="kw">function</span> <span class="fn">heuristic</span>(aiPl){
+
+  <span class="kw">const</span> aiMoves = <span class="fn">getValidMoves</span>(posIA[<span class="num">0</span>], posIA[<span class="num">1</span>]);
+  <span class="kw">const</span> opMoves = <span class="fn">getValidMoves</span>(posAdv[<span class="num">0</span>], posAdv[<span class="num">1</span>]);
+  <span class="cm">// movimentos disponíveis da IA e do adversário</span>
+
+  <span class="cm">// estados terminais têm prioridade máxima</span>
+  <span class="kw">if</span>(opMoves.length===<span class="num">0</span>) <span class="kw">return</span> <span class="hi">+10000</span>;
+  <span class="cm">// adversário sem saída = vitória da IA</span>
+
+  <span class="kw">if</span>(aiMoves.length===<span class="num">0</span>) <span class="kw">return</span> <span class="hi3">-10000</span>;
+  <span class="cm">// IA sem saída = derrota</span>
+
+  <span class="cm">// calcula os 5 fatores da heurística</span>
+
+  <span class="kw">const</span> f_lib  = <span class="fn">_calcLiberdadeRelativa</span>(aiMoves, opMoves);
+  <span class="cm">// analisa liberdade futura olhando alguns passos à frente</span>
+
+  <span class="kw">const</span> f_mob  = <span class="fn">_calcMobilidade</span>(aiMoves, opMoves);
+  <span class="cm">// compara quantidade imediata de movimentos</span>
+
+  <span class="kw">const</span> f_cen  = <span class="fn">_calcCentralidade</span>(posIA, posAdv);
+  <span class="cm">// valoriza posições mais centrais do tabuleiro</span>
+
+  <span class="kw">const</span> f_trap = <span class="fn">_calcTrapPotential</span>(opMoves);
+  <span class="cm">// mede chance de prender adversário</span>
+
+  <span class="kw">const</span> f_iso  = <span class="fn">_calcAutoIsolamento</span>(aiMoves);
+  <span class="cm">// evita que a própria IA fique presa</span>
+
+  <span class="cm">// combinação ponderada dos fatores</span>
+  <span class="kw">const</span> total =
+      <span class="hi">HEU_W</span>.lib  * f_lib
+    + <span class="hi">HEU_W</span>.mob  * f_mob
+    + <span class="hi">HEU_W</span>.cen  * f_cen
+    + <span class="hi">HEU_W</span>.trap * f_trap
+    - <span class="hi">HEU_W</span>.iso  * f_iso;
+
+  <span class="cm">// auto-isolamento é penalidade, por isso subtrai</span>
+
+  <span class="kw">return</span> total * <span class="num">100</span>;
+  <span class="cm">// aumenta escala dos valores heurísticos</span>
+
+}</pre>
+</div>
+
+  <div class="callout reveal" style="margin-top:18px">
+    <strong>Por que F4 e F5 são simétricos?</strong> F4 mede o aperto médio dos destinos do <em>adversário</em> (oportunidade de prender). F5 mede o aperto médio dos destinos da <em>própria IA</em> (risco de se prender sozinha). Ambos usam a mesma fórmula matemática aplicada a um conjunto diferente de destinos — isso torna a heurística conceitualmente limpa e auditável.
+  </div>
+</section>
+
+<!-- ══ 06 — COMPARAÇÃO ═════════════════════════════════════════ -->
+<section class="section" id="comparacao">
+  <p class="sec-label">06 — desempenho</p>
+  <h2 class="sec-title">Minimax vs Alfa-Beta</h2>
+  <p class="sec-desc">
+    Mesma qualidade de decisão, eficiência radicalmente diferente.
+    O usuário seleciona qual algoritmo a IA usa durante a partida; o painel exibe nós analisados, tempo gasto e, no caso do Alfa-Beta, a quantidade de podas realizadas em cada turno.
+  </p>
+
+  <table class="compare-table reveal">
+    <thead>
+      <tr>
+        <th>Critério</th>
+        <th class="mm-col">Minimax Puro</th>
+        <th class="ab-col">Poda Alfa-Beta</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Resultado</td><td class="mm-col">Ótimo</td><td class="ab-col">Ótimo (idêntico)</td></tr>
+      <tr><td>Poda de ramos</td><td class="mm-col">Não — analisa tudo</td><td class="ab-col">Sim — corta ramos inúteis</td></tr>
+      <tr><td>Complexidade</td><td class="mm-col">O(b<sup>d</sup>)</td><td class="ab-col">O(b<sup>d/2</sup>) melhor caso</td></tr>
+      <tr><td>Nós explorados</td><td class="mm-col">100% da árvore</td><td class="ab-col">30–60% da árvore</td></tr>
+      <tr><td>Parâmetros extras</td><td class="mm-col">Nenhum</td><td class="ab-col">alpha e beta</td></tr>
+      <tr><td>Podas exibidas</td><td class="mm-col">— (não realiza)</td><td class="ab-col">pruneCount por turno</td></tr>
+      <tr><td>Etapa do trabalho</td><td class="mm-col">Etapa 1</td><td class="ab-col">Etapa 2</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout reveal">
+    <strong>Por que os dois chegam ao mesmo resultado?</strong><br>
+    O Alfa-Beta nunca corta um ramo que <em>poderia</em> mudar a decisão.
+    Ele elimina apenas ramos que <strong>provadamente</strong> não vão alterar o resultado ótimo, com garantia matemática.
+    É como riscar da lista as opções que você já sabe que são piores, sem nem precisar calculá-las.
+  </div>
+
+  <button class="code-toggle-btn" onclick="toggleCode('cw-aim', this)" aria-expanded="false"><span class="ctb-icon">▶</span> VER CÓDIGO: aiMove() — Orquestrador</button>
+  <div class="code-wrap reveal collapsed" id="cw-aim">
+    <div class="code-header">
+      <span class="code-title">Orquestrador da IA — aiMove()</span>
+      <span class="code-tag">execução por turno</span>
+    </div>
+    <pre><span class="kw">function</span> <span class="fn">aiMove</span>(){
+  <span class="kw">const</span> pl  = curTurn;                          <span class="cm">// qual IA está jogando</span>
+  <span class="kw">const</span> mvs = <span class="fn">getValidMoves</span>(pos[<span class="num">0</span>], pos[<span class="num">1</span>]);
+  <span class="kw">if</span>(mvs.length === <span class="num">0</span>) { <span class="fn">triggerWin</span>(adversario); <span class="kw">return</span>; }
+
+  <span class="cm">// Roda APENAS o algoritmo escolhido pelo usuário (toggle MINIMAX / α-β no menu)</span>
+  <span class="kw">let</span> res;
+  <span class="kw">if</span>(algo === <span class="str">'alfabeta'</span>){
+    res = <span class="fn">runAlphaBeta</span>(pl, mvs);  <span class="cm">// busca com poda + move ordering</span>
+  } <span class="kw">else</span> {
+    res = <span class="fn">runMinimax</span>(pl, mvs);    <span class="cm">// busca exaustiva, sem ordenação</span>
+  }
+
+  <span class="cm">// Painel exibe: nós analisados, tempo gasto, motivo do cutoff (se houver)</span>
+  <span class="hi">lastAIms</span>     = res.timeMs;
+  <span class="hi">nodesVisited</span> = res.nodes;
+  log(`[${algo}] ${res.timeMs}ms · ${res.nodes} nós` +
+      (_searchCtx.cutoff ? ` · CUTOFF:${_searchCtx.reason}` : <span class="str">''</span>));
+
+  <span class="cm">// Executa o par escolhido (movimento + bloqueio) no tabuleiro real</span>
+  <span class="fn">execAIMove</span>(pl, res.bestMove, res.bestBlock);
+}</pre>
+  </div>
+
+  <div class="callout reveal" style="margin-top:18px">
+    <strong>Como comparar os dois na prática?</strong> Basta jogar uma partida com cada algoritmo selecionado (toggle no menu da IA) na mesma dificuldade — o painel HUD exibe nós e tempo de cada turno, e o console do navegador registra um log detalhado por turno. Em PLY 3, o Alfa-Beta tipicamente visita 30–60% menos nós que o Minimax para chegar à mesma decisão.
+  </div>
+</section>
+
+<!-- ══ 07 — FLUXO ══════════════════════════════════════════════ -->
+<section class="section" id="fluxo">
+  <p class="sec-label">07 — execução</p>
+  <h2 class="sec-title">Fluxo de um Turno da IA</h2>
+  <p class="sec-desc">Do momento em que é a vez da IA até a jogada aparecer no tabuleiro.</p>
+
+  <div class="flow reveal">
+    <div class="flow-step">
+      <div class="flow-dot">1</div>
+      <div class="flow-body">
+        <p class="flow-title">Leitura do Estado</p>
+        <p class="flow-text">A IA lê o tabuleiro atual: onde estão os peões, quais casas estão bloqueadas, quantos movimentos cada um tem disponíveis.</p>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-dot">2</div>
+      <div class="flow-body">
+        <p class="flow-title">Geração de Movimentos</p>
+        <p class="flow-text"><code style="font-family:'JetBrains Mono',monospace;color:var(--gold3)">getValidMoves()</code> retorna as 8 casas vizinhas disponíveis. Se a lista vier vazia, a IA perdeu e o jogo termina antes de qualquer busca.</p>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-dot">3</div>
+      <div class="flow-body">
+        <p class="flow-title">Move Ordering (só no Alfa-Beta)</p>
+        <p class="flow-text"><code style="font-family:'JetBrains Mono',monospace;color:var(--gold3)">orderMoves()</code> ordena os movimentos pelos mais promissores primeiro (movimentos que isolam o adversário, depois maior liberdade própria, menor liberdade do oponente, centralidade). Tiebreak é determinístico (coordenadas lexicográficas) — mesmo estado sempre gera mesma decisão.</p>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-dot">4</div>
+      <div class="flow-body">
+        <p class="flow-title">Seleção dos Candidatos de Bloqueio</p>
+        <p class="flow-text"><code style="font-family:'JetBrains Mono',monospace;color:var(--gold3)">getBlockCandidatesAI()</code> ordena as casas vazias por proximidade Chebyshev ao adversário e aplica um <strong>cap</strong> inversamente proporcional ao PLY (10 / 6 / 4). Isso evita explosão combinatória sem perder os bloqueios estrategicamente relevantes.</p>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-dot">5</div>
+      <div class="flow-body">
+        <p class="flow-title">Busca Recursiva com Cutoff</p>
+        <p class="flow-text">Minimax ou Alfa-Beta (conforme escolha do usuário) descem na árvore explorando cada par <em>movimento × bloqueio</em>. A cada nó, verifica orçamento: se o limite de nós ou de tempo (1200 ms) for atingido, devolve a melhor jogada parcial encontrada.</p>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-dot">6</div>
+      <div class="flow-body">
+        <p class="flow-title">Avaliação pela Heurística de Liberdade Relativa</p>
+        <p class="flow-text">Nos nós folha (profundidade = PLY), <code style="font-family:'JetBrains Mono',monospace;color:var(--gold3)">heuristic()</code> calcula os 5 fatores (Liberdade Relativa, Mobilidade, Centralidade, Trap, Auto-Isolamento), faz a soma ponderada e retorna o score numérico.</p>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-dot">7</div>
+      <div class="flow-body">
+        <p class="flow-title">Backtracking In-Place</p>
+        <p class="flow-text">A cada simulação, o tabuleiro é modificado (<code style="font-family:'JetBrains Mono',monospace;color:var(--gold3)">applyMoveOnly</code> + <code style="font-family:'JetBrains Mono',monospace;color:var(--gold3)">applyBlock</code>) e depois <em>desfeito</em> manualmente — sem copiar o tabuleiro inteiro. Isso é o que viabiliza a busca em árvore caber no tempo.</p>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-dot">8</div>
+      <div class="flow-body">
+        <p class="flow-title">Execução: Mover + Bloquear</p>
+        <p class="flow-text">O par (movimento + bloqueio) de maior score é aplicado visivelmente no tabuleiro. O painel HUD exibe nós visitados, tempo, podas e os 5 fatores que dominaram a decisão.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 08 — PERGUNTAS ══════════════════════════════════════════ -->
+<section class="section" id="perguntas">
+  <p class="sec-label">08 — defesa</p>
+  <h2 class="sec-title">Perguntas e Respostas</h2>
+  <p class="sec-desc">Clique em cada pergunta para ver a resposta.</p>
+
+  <div class="qa-list reveal">
+    <div class="qa-item">
+      <div class="qa-q">
+        <span class="qa-q-text">Por que Minimax e Alfa-Beta chegam ao mesmo resultado?</span>
+        <span class="qa-arrow">▾</span>
+      </div>
+      <div class="qa-a">
+        O Alfa-Beta nunca corta um ramo que poderia mudar a decisão. A poda só acontece quando é matematicamente provado que aquele ramo não vai alterar o resultado ótimo, como riscar da lista opções que já sabemos que são piores, sem nem precisar calcular.
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">
+        <span class="qa-q-text">O que é PLY e como afeta a dificuldade?</span>
+        <span class="qa-arrow">▾</span>
+      </div>
+      <div class="qa-a">
+        PLY é a profundidade de busca: quantas jogadas à frente a IA olha. PLY 1 = 1 jogada (fácil, muito rápido). PLY 2 = 2 jogadas (médio). PLY 3 = 3 jogadas (difícil). Cada nível a mais multiplica o trabalho: PLY 3 analisa cerca de 4.000 nós onde PLY 2 analisaria 576.
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">
+        <span class="qa-q-text">Quais fatores compõem a heurística e por que cinco?</span>
+        <span class="qa-arrow">▾</span>
+      </div>
+      <div class="qa-a">
+        A heurística combina cinco fatores ponderados: <strong>Liberdade Relativa</strong> (0.40) que olha 2 níveis à frente; <strong>Mobilidade</strong> (0.20) que mede a diferença imediata de movimentos; <strong>Centralidade</strong> (0.15) que favorece posições centrais; <strong>Trap Potential</strong> (0.15) que mede a chance de prender o adversário; e <strong>Auto-Isolamento</strong> (−0.10) que penaliza posições onde a própria IA estaria apertada. Combinar múltiplos fatores evita os pontos cegos de um critério único — por exemplo, mobilidade pura pode favorecer uma posição com muitas saídas imediatas que levam a becos.
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">
+        <span class="qa-q-text">O que é backtracking e por que é usado?</span>
+        <span class="qa-arrow">▾</span>
+      </div>
+      <div class="qa-a">
+        O algoritmo aplica a jogada no tabuleiro (modifica a matriz), calcula o resultado recursivamente, e depois desfaz exatamente o que fez, como jogar no "modo rascunho". Isso é mais eficiente do que criar uma cópia do tabuleiro a cada nível da árvore, poupando memória e tempo.
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">
+        <span class="qa-q-text">Por que o painel mostra "—" para podas no modo Minimax?</span>
+        <span class="qa-arrow">▾</span>
+      </div>
+      <div class="qa-a">
+        Poda é uma técnica exclusiva do Alfa-Beta. O Minimax puro analisa todos os ramos sem nenhum atalho; por definição, ele não realiza podas. Mostrar zero seria enganoso; "—" indica que o conceito simplesmente não se aplica ao algoritmo selecionado.
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">
+        <span class="qa-q-text">Como a IA escolhe o bloqueio?</span>
+        <span class="qa-arrow">▾</span>
+      </div>
+      <div class="qa-a">
+        Movimento e bloqueio são tratados como um <strong>par</strong> dentro da busca: para cada movimento possível, a IA itera sobre os candidatos de bloqueio e avalia cada combinação <em>movimento + bloqueio</em> como uma ação única. Os candidatos não são escolhidos aleatoriamente — <code style="font-family:'JetBrains Mono',monospace;color:var(--gold3)">getBlockCandidatesAI()</code> os ordena por proximidade Chebyshev ao adversário e aplica um cap de 10/6/4 conforme o PLY, focando em bloqueios estrategicamente relevantes.
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">
+        <span class="qa-q-text">O que é Move Ordering e por que só o Alfa-Beta usa?</span>
+        <span class="qa-arrow">▾</span>
+      </div>
+      <div class="qa-a">
+        Move Ordering ordena os movimentos antes da busca, colocando os mais promissores primeiro. O Minimax puro analisa <em>todos</em> os ramos independentemente da ordem, então ordenar não muda nada — por isso ele explora na ordem natural (didaticamente "ingênuo"). Já o Alfa-Beta corta ramos com base no que já foi encontrado: quanto mais cedo aparecer um bom score, mais cortes ele consegue fazer. Ordenar pelos melhores primeiro pode dobrar a eficiência da poda.
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">
+        <span class="qa-q-text">A IA é determinística? Mesma posição = mesma jogada?</span>
+        <span class="qa-arrow">▾</span>
+      </div>
+      <div class="qa-a">
+        Sim. Toda a heurística é puramente determinística, e o tiebreak do Move Ordering usa critérios fixos (coordenadas lexicográficas, depois índice original) — sem aleatoriedade. Isso garante que o mesmo estado de tabuleiro sempre produz a mesma decisão e elimina loops em IA vs IA. É uma propriedade importante para um trabalho acadêmico: a IA pode ser reproduzida e questionada (<em>"por que escolheu essa jogada?"</em>).
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">
+        <span class="qa-q-text">Por que PLY 3 não trava o navegador?</span>
+        <span class="qa-arrow">▾</span>
+      </div>
+      <div class="qa-a">
+        Três salvaguardas combinadas: <strong>(1)</strong> cap de candidatos de bloqueio (10/6/4 conforme PLY); <strong>(2)</strong> limite de nós (500/2000/6000 conforme PLY) que pára a busca quando o orçamento se esgota; <strong>(3)</strong> cutoff de tempo de 1200 ms. Quando qualquer limite é atingido, a busca devolve a melhor jogada parcial encontrada. Sem esses limites, PLY 3 poderia gerar centenas de milhares de nós; com eles, a IA responde em menos de 1 segundo.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ FOOTER ══════════════════════════════════════════════════ -->
+<footer>
+  <p>Projeto <span>Isolation</span> · IFTM Campus Patrocínio · Inteligência Artificial e Computacional · 2026</p>
+  <p style="margin-top:6px">Minimax · Poda Alfa-Beta · <span>Heurística de Liberdade Relativa</span> · Move Ordering · PLY Variável</p>
+  <p style="margin-top:6px">Profa. Dra. Danielli Araújo Lima · Análise e Desenvolvimento de Sistemas · 6º Período</p>
+</footer>
+
+<script>
+  // Scroll reveal
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if(e.isIntersecting){ e.target.classList.add('visible'); obs.unobserve(e.target); }
+    });
+  }, { threshold: 0.07 });
+  document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+  // Q&A accordion
+  document.querySelectorAll('.qa-item').forEach(item => {
+    item.querySelector('.qa-q').addEventListener('click', () => {
+      const isOpen = item.classList.contains('open');
+      document.querySelectorAll('.qa-item').forEach(i => i.classList.remove('open'));
+      if(!isOpen) item.classList.add('open');
+    });
+  });
+
+  // Toggle de código — colapsa/expande blocos de código sob demanda
+  function toggleCode(id, btn){
+    const block = document.getElementById(id);
+    if(!block) return;
+    const isCollapsed = block.classList.contains('collapsed');
+    // Calcula altura real para animar corretamente
+    if(isCollapsed){
+      block.classList.remove('collapsed');
+      block.style.maxHeight = block.scrollHeight + 'px';
+      block.style.opacity = '1';
+      btn.classList.add('open');
+      btn.setAttribute('aria-expanded', 'true');
+      btn.querySelector('.ctb-icon').textContent = '▼';
+      btn.innerHTML = btn.innerHTML.replace(/VER CÓDIGO/, 'OCULTAR CÓDIGO');
+    } else {
+      block.style.maxHeight = '0';
+      block.style.opacity = '0';
+      btn.classList.remove('open');
+      btn.setAttribute('aria-expanded', 'false');
+      btn.querySelector('.ctb-icon').textContent = '▶';
+      btn.innerHTML = btn.innerHTML.replace(/OCULTAR CÓDIGO/, 'VER CÓDIGO');
+      setTimeout(()=>block.classList.add('collapsed'), 350);
+    }
+  }
+  window.toggleCode = toggleCode;
+
+/* ═══════════════════════════════════════════════════════════════
+   EXPLORADORES INTERATIVOS — Minimax e Alfa-Beta
+   Mesma lógica do jogo, adaptada para apresentação com narrativa.
+   Árvore: S(MAX) → A(MIN), B(MIN) → C,D,E,F(MAX) → 8 folhas
+═══════════════════════════════════════════════════════════════ */
+(function(){
+
+const COL = {
+  empty:'#1a1c26', active:'#ffd700', done:'#2a1e00',
+  leaf:'#14161f',  edge:'#2a2d3a',  edgePrune:'#ef4444',
+  textActive:'#07080d', textDone:'#ffd700', textLeaf:'#9aa0b8',
+  labelLayer:'#4a5070', abBadge:'#34d399', pruneBg:'#1a0808'
+};
+
+const CW=540, CH=310;
+function pt(px,py){return {x:Math.round(px*CW), y:Math.round(py*CH)};}
+
+const nodes = {
+  S:  {...pt(.50,.10), id:'S',  label:'S',  role:'MAX', isLeaf:false},
+  A:  {...pt(.26,.30), id:'A',  label:'A',  role:'MIN', isLeaf:false},
+  B:  {...pt(.74,.30), id:'B',  label:'B',  role:'MIN', isLeaf:false},
+  C:  {...pt(.14,.52), id:'C',  label:'C',  role:'MAX', isLeaf:false},
+  D:  {...pt(.38,.52), id:'D',  label:'D',  role:'MAX', isLeaf:false},
+  E:  {...pt(.62,.52), id:'E',  label:'E',  role:'MAX', isLeaf:false},
+  F:  {...pt(.86,.52), id:'F',  label:'F',  role:'MAX', isLeaf:false},
+  L1: {...pt(.08,.78), id:'L1', label:'3',  role:null, isLeaf:true},
+  L2: {...pt(.20,.78), id:'L2', label:'1',  role:null, isLeaf:true},
+  L3: {...pt(.32,.78), id:'L3', label:'5',  role:null, isLeaf:true},
+  L4: {...pt(.44,.78), id:'L4', label:'2',  role:null, isLeaf:true},
+  L5: {...pt(.56,.78), id:'L5', label:'7',  role:null, isLeaf:true},
+  L6: {...pt(.68,.78), id:'L6', label:'4',  role:null, isLeaf:true},
+  L7: {...pt(.80,.78), id:'L7', label:'8',  role:null, isLeaf:true},
+  L8: {...pt(.92,.78), id:'L8', label:'2',  role:null, isLeaf:true},
+};
+
+const edges=[
+  {id:'S-A',from:'S',to:'A'},{id:'S-B',from:'S',to:'B'},
+  {id:'A-C',from:'A',to:'C'},{id:'A-D',from:'A',to:'D'},
+  {id:'B-E',from:'B',to:'E'},{id:'B-F',from:'B',to:'F'},
+  {id:'C-L1',from:'C',to:'L1'},{id:'C-L2',from:'C',to:'L2'},
+  {id:'D-L3',from:'D',to:'L3'},{id:'D-L4',from:'D',to:'L4'},
+  {id:'E-L5',from:'E',to:'L5'},{id:'E-L6',from:'E',to:'L6'},
+  {id:'F-L7',from:'F',to:'L7'},{id:'F-L8',from:'F',to:'L8'},
+];
+
+/* ── Frames MINIMAX — narrativa em linguagem simples ── */
+const framesMM = [
+  { active:'S', vals:{}, pruned:[],
+    label:'Início da busca',
+    msg:'A IA começa na <span class="hi-max">raiz (MAX)</span>. Ela não sabe nada ainda — vai descer pela árvore inteira antes de tomar qualquer decisão.<br><br>Cada ramo representa uma jogada possível. A IA vai explorar <strong>todos</strong> eles.' },
+
+  { active:'C', vals:{}, pruned:[],
+    label:'Descendo pelo lado esquerdo',
+    msg:'A IA desce até o nó C (<span class="hi-max">MAX</span>). Aqui ela vai ler dois valores da heurística — como se pedisse uma "nota" para dois estados futuros do tabuleiro.' },
+
+  { active:'C', vals:{C:3}, pruned:[],
+    label:'C avalia L1=3 e L2=1 → escolhe 3',
+    msg:'C lê as folhas: L1 vale <strong>3</strong>, L2 vale <strong>1</strong>. Como é nível MAX, C escolhe o <span class="hi-max">maior: 3</span>.<br><br>Esse valor sobe para o pai — o nó A.' },
+
+  { active:'D', vals:{C:3}, pruned:[],
+    label:'Agora o nó D',
+    msg:'A busca continua no nó D (<span class="hi-max">MAX</span>). Mais duas folhas para avaliar: L3=5 e L4=2.' },
+
+  { active:'D', vals:{C:3,D:5}, pruned:[],
+    label:'D avalia L3=5 e L4=2 → escolhe 5',
+    msg:'D lê L3=<strong>5</strong> e L4=<strong>2</strong>. Nível MAX → escolhe o <span class="hi-max">maior: 5</span>.<br><br>Agora A tem os dois filhos: C=3 e D=5.' },
+
+  { active:'A', vals:{C:3,D:5,A:3}, pruned:[],
+    label:'A (MIN) escolhe o pior para a IA',
+    msg:'A é nível <span class="hi-min">MIN</span> — representa o adversário, que vai tentar <em>prejudicar</em> a IA.<br><br>Recebe C=3 e D=5. Escolhe o <span class="hi-min">menor: 3</span>. O adversário prefere deixar a IA com menos.' },
+
+  { active:'E', vals:{C:3,D:5,A:3,E:7}, pruned:[],
+    label:'Lado direito — E avalia L5=7 e L6=4',
+    msg:'Agora a busca vai para o ramo direito. E (<span class="hi-max">MAX</span>) avalia L5=<strong>7</strong> e L6=<strong>4</strong>.<br><br>Escolhe o <span class="hi-max">maior: 7</span>.' },
+
+  { active:'F', vals:{C:3,D:5,A:3,E:7,F:8}, pruned:[],
+    label:'F avalia L7=8 e L8=2 → escolhe 8',
+    msg:'F (<span class="hi-max">MAX</span>) lê L7=<strong>8</strong> e L8=<strong>2</strong>. Escolhe o <span class="hi-max">maior: 8</span>.<br><br>B agora tem E=7 e F=8.' },
+
+  { active:'B', vals:{C:3,D:5,A:3,E:7,F:8,B:7}, pruned:[],
+    label:'B (MIN) escolhe o pior para a IA',
+    msg:'B é <span class="hi-min">MIN</span> — o adversário. Recebe E=7 e F=8.<br><br>Escolhe o <span class="hi-min">menor: 7</span>. Agora a raiz tem A=3 e B=7.' },
+
+  { active:'S', vals:{C:3,D:5,A:3,E:7,F:8,B:7,S:7}, pruned:[],
+    label:'✓ Decisão final: 7',
+    msg:'A raiz S (<span class="hi-max">MAX</span>) compara A=3 e B=7.<br><br>Escolhe o <span class="hi-ok">maior: 7</span>. A IA vai pelo ramo B — é o melhor garantido mesmo que o adversário jogue da melhor forma.<br><br><strong>O Minimax analisou todos os 14 nós da árvore.</strong>' },
+];
+
+/* ── Frames ALFA-BETA — narrativa focada nas podas ── */
+const framesAB = [
+  { active:'S', vals:{}, pruned:[], ab:{},
+    label:'Início — janela aberta',
+    msg:'A busca começa igual ao Minimax. Mas agora a IA carrega dois "limitadores":<br><br><span class="hi-ok">α (alpha)</span> = o melhor que a IA já garantiu (começa em −∞)<br><span class="hi-min">β (beta)</span> = o melhor que o adversário já garantiu (começa em +∞)<br><br>Quando esses dois se cruzam, a busca para — o ramo não interessa.' },
+
+  { active:'C', vals:{}, pruned:[], ab:{},
+    label:'Descendo — C avalia L1=3 e L2=1',
+    msg:'C (<span class="hi-max">MAX</span>) avalia as folhas L1=3 e L2=1. Escolhe o maior: <strong>3</strong>.<br><br>Esse valor sobe para A. Até aqui idêntico ao Minimax.' },
+
+  { active:'A', vals:{C:3,A:3}, pruned:[], ab:{A:'β→3'},
+    label:'A (MIN) recebe 3 — β atualiza para 3',
+    msg:'A é <span class="hi-min">MIN</span>. Recebeu C=3. Atualiza seu β para <strong>3</strong>.<br><br>Isso significa: <em>"o adversário já tem como garantir que a IA receba no máximo 3 por este caminho."</em>' },
+
+  { active:'D', vals:{C:3,A:3}, pruned:[], ab:{A:'β=3', D:'α→5'},
+    label:'D lê L3=5 — α sobe para 5',
+    msg:'D (<span class="hi-max">MAX</span>) herda os limites de A. Lê L3=<strong>5</strong>.<br><br>Atualiza seu α para 5. Agora α(5) > β(3).<br><br><span class="hi-cut">Isso é o sinal para podar.</span>' },
+
+  { active:'D', vals:{C:3,A:3,'D':'≥5'}, pruned:['D-L4'], ab:{A:'β=3'},
+    label:'✂ PODA! L4 nunca será calculado',
+    isPrune:true,
+    msg:'<span class="hi-cut">CORTE!</span> α(5) ≥ β(3).<br><br>A já sabe que pode forçar no máximo 3 para a IA. D já encontrou 5 — A jamais escolheria D. Não importa o que L4 valha: <strong>esse ramo está descartado</strong>.<br><br>L4 nunca é calculado. Economia real.' },
+
+  { active:'S', vals:{C:3,A:3,'D':'≥5',S:3}, pruned:['D-L4'], ab:{S:'α→3'},
+    label:'S recebe A=3 — α global sobe',
+    msg:'A raiz S (<span class="hi-max">MAX</span>) recebe A=3. Atualiza α global para <strong>3</strong>.<br><br>Agora qualquer ramo que garanta menos que 3 pode ser cortado também.' },
+
+  { active:'E', vals:{C:3,A:3,'D':'≥5',S:3,E:7}, pruned:['D-L4'], ab:{E:'α→7'},
+    label:'E avalia L5=7 e L6=4 → escolhe 7',
+    msg:'E (<span class="hi-max">MAX</span>) herda α=3. Avalia L5=<strong>7</strong> e L6=<strong>4</strong>.<br><br>Escolhe 7. Atualiza α local para 7. Nenhuma poda aqui — B ainda pode escolher este valor.' },
+
+  { active:'B', vals:{C:3,A:3,'D':'≥5',S:3,E:7,B:7}, pruned:['D-L4'], ab:{B:'β→7'},
+    label:'B (MIN) recebe E=7 — β atualiza',
+    msg:'B (<span class="hi-min">MIN</span>) recebe E=7. Atualiza seu β para <strong>7</strong>.<br><br>Estado de B: α=3, β=7. A janela ainda está aberta — F pode ser explorado.' },
+
+  { active:'F', vals:{C:3,A:3,'D':'≥5',S:3,E:7,B:7,'F':'≥8'}, pruned:['D-L4','F-L8'], ab:{B:'β=7', F:'α→8'},
+    isPrune:true,
+    label:'✂ Segunda poda! F lê L7=8 → corta L8',
+    msg:'F (<span class="hi-max">MAX</span>) herda α=3, β=7. Lê L7=<strong>8</strong>. α sobe para 8.<br><br><span class="hi-cut">α(8) ≥ β(7).</span> B já tem E=7 garantido — se F der mais que 7, B não vai escolher F de qualquer forma.<br><br>L8 é cortado sem ser lido.' },
+
+  { active:'S', vals:{C:3,A:3,'D':'≥5',S:7,E:7,B:7,'F':'≥8'}, pruned:['D-L4','F-L8'], ab:{S:'→7'},
+    label:'✓ Decisão final: 7 — com 2 podas',
+    msg:'S (<span class="hi-max">MAX</span>) compara A=3 e B=7. Escolhe <span class="hi-ok">7</span>.<br><br><strong>Mesmo resultado que o Minimax.</strong><br><br>Diferença: o Alfa-Beta analisou <strong>12 nós</strong> em vez de 14. Dois nós (L4 e L8) foram cortados sem custo algum.<br><br>Em árvores maiores, esse ganho se multiplica exponencialmente.' },
+];
+
+/* ── Estado dos dois exploradores ── */
+const state = {
+  mm: { frames:framesMM, step:0, canvasId:'mm-canvas', counterId:'mm-counter',
+        pipId:'mm-pips', infoId:'mm-stepinfo', labelId:'mm-step-label' },
+  ab: { frames:framesAB, step:0, canvasId:'ab-canvas', counterId:'ab-counter',
+        pipId:'ab-pips', infoId:'ab-stepinfo', labelId:'ab-step-label' },
+};
+
+/* ── Desenho do canvas ── */
+function drawExplorer(key){
+  const s = state[key];
+  const canvas = document.getElementById(s.canvasId);
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const frame = s.frames[s.step];
+  const ratio = window.devicePixelRatio || 1;
+  if(!canvas._sized){
+    canvas.width = CW*ratio; canvas.height = CH*ratio;
+    canvas.style.width = CW+'px'; canvas.style.height = CH+'px';
+    ctx.scale(ratio, ratio);
+    canvas._sized = true;
+  }
+  ctx.clearRect(0,0,CW,CH);
+
+  // Arestas
+  edges.forEach(e=>{
+    const fr = nodes[e.from], to = nodes[e.to];
+    const isPruned = frame.pruned && frame.pruned.includes(e.id);
+    ctx.beginPath();
+    ctx.moveTo(fr.x, fr.y);
+    ctx.lineTo(to.x, to.y);
+    if(isPruned){
+      ctx.setLineDash([5,4]);
+      ctx.strokeStyle = COL.edgePrune;
+      ctx.lineWidth = 2;
+    } else {
+      ctx.setLineDash([]);
+      ctx.strokeStyle = COL.edge;
+      ctx.lineWidth = 1.5;
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+    if(isPruned){
+      const mx=(fr.x+to.x)/2, my=(fr.y+to.y)/2;
+      ctx.font='14px serif';
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText('✂', mx, my);
+    }
+  });
+
+  // Nós
+  Object.values(nodes).forEach(n=>{
+    const isActive = frame.active === n.id;
+    const hasDone  = frame.vals && frame.vals[n.id] !== undefined;
+    const isPruned = frame.pruned && frame.pruned.some(p=>p.startsWith(n.id+'-') || p.endsWith('-'+n.id));
+    const R = n.isLeaf ? 13 : 18;
+
+    // Fundo
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, R, 0, Math.PI*2);
+    if(isActive) ctx.fillStyle = '#ffd700';
+    else if(hasDone) ctx.fillStyle = '#2a1e00';
+    else if(isPruned) ctx.fillStyle = '#1a0808';
+    else if(n.isLeaf) ctx.fillStyle = COL.leaf;
+    else ctx.fillStyle = COL.empty;
+    ctx.fill();
+
+    // Borda
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, R, 0, Math.PI*2);
+    ctx.strokeStyle = isActive ? '#c8860a'
+      : hasDone ? '#ffd700'
+      : isPruned ? '#ef4444'
+      : n.isLeaf ? '#3a3f50'
+      : '#2a2d3a';
+    ctx.lineWidth = isActive ? 2.5 : 1.5;
+    ctx.stroke();
+
+    // Texto
+    let txt = n.isLeaf ? n.label : n.id;
+    if(hasDone) txt = String(frame.vals[n.id]);
+    ctx.font = `bold ${n.isLeaf?11:12}px 'JetBrains Mono',monospace`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillStyle = isActive ? '#07080d'
+      : hasDone ? '#ffd700'
+      : isPruned ? '#ef4444'
+      : '#9aa0b8';
+    ctx.fillText(txt, n.x, n.y);
+
+    // Rótulo MAX/MIN
+    if(!n.isLeaf){
+      ctx.font = `9px 'JetBrains Mono',monospace`;
+      ctx.fillStyle = COL.labelLayer;
+      ctx.textAlign='center'; ctx.textBaseline='bottom';
+      ctx.fillText(n.role, n.x, n.y-R-3);
+    }
+
+    // Badge α/β (Alfa-Beta)
+    if(frame.ab && frame.ab[n.id]){
+      const badge = frame.ab[n.id];
+      ctx.font = `bold 8px 'JetBrains Mono',monospace`;
+      ctx.textAlign='left'; ctx.textBaseline='middle';
+      ctx.fillStyle = COL.abBadge;
+      ctx.fillText(badge, n.x+R+4, n.y);
+    }
+  });
+
+  // Legenda de camadas no lado esquerdo
+  const layers=[
+    {y:nodes.S.y,  label:'MAX · IA escolhe o maior'},
+    {y:nodes.A.y,  label:'MIN · adversário escolhe o menor'},
+    {y:nodes.C.y,  label:'MAX'},
+    {y:nodes.L1.y, label:'Folhas · heurística avalia'},
+  ];
+  ctx.font = '8px JetBrains Mono,monospace';
+  ctx.fillStyle = '#3a3f50';
+  ctx.textAlign = 'left';
+  layers.forEach(l=>{
+    ctx.textBaseline='middle';
+    ctx.fillText(l.label, 4, l.y);
+  });
+}
+
+/* ── Atualiza pips ── */
+function updatePips(key){
+  const s = state[key];
+  const track = document.getElementById(s.pipId);
+  if(!track) return;
+  track.innerHTML='';
+  s.frames.forEach((f,i)=>{
+    const pip = document.createElement('div');
+    let cls = 'exp-pip';
+    if(i < s.step) cls += ' done';
+    else if(i === s.step) cls += ' current';
+    if(f.isPrune) cls += ' prune-pip';
+    pip.className = cls;
+    pip.title = `Passo ${i+1}`;
+    pip.onclick = ()=>{ s.step=i; renderExplorer(key); };
+    track.appendChild(pip);
+  });
+}
+
+/* ── Render ── */
+function renderExplorer(key){
+  const s = state[key];
+  const frame = s.frames[s.step];
+  drawExplorer(key);
+  updatePips(key);
+  const lbl = document.getElementById(s.labelId);
+  const info = document.getElementById(s.infoId);
+  const ctr  = document.getElementById(s.counterId);
+  if(lbl) lbl.textContent = frame.label || '';
+  if(info) info.innerHTML = frame.msg || '';
+  if(ctr) ctr.textContent = `PASSO ${s.step+1} / ${s.frames.length}`;
+}
+
+/* ── Controles públicos ── */
+window.explorerStep = function(key){
+  const s = state[key];
+  if(s.step < s.frames.length-1){ s.step++; renderExplorer(key); }
+};
+window.explorerReset = function(key){
+  state[key].step = 0;
+  renderExplorer(key);
+};
+
+/* ── Init ── */
+function initExplorers(){
+  renderExplorer('mm');
+  renderExplorer('ab');
+}
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded', initExplorers);
+} else {
+  setTimeout(initExplorers, 300);
+}
+
+})(); // fim exploradores
+
+/* ═══════════════════════════════════════════════════════════════
+   DEMO INTERATIVO — LIBERDADE RELATIVA
+   Tabuleiro 5×5 auto-contido, sem depender do jogo.
+   Roda os mesmos cálculos da heurística real em 5 passos narrados.
+═══════════════════════════════════════════════════════════════ */
+(function(){
+  // ── Estado do tabuleiro de demonstração ──────────────────────
+  // 0=vazio 1=bloqueado 2=P1(humano/ouro) 3=P2(IA/prata)
+  const EMPTY=0,BLOCKED=1,P1=2,P2=3;
+  const ROWS=5,COLS=5;
+
+  // Estado pré-definido: jogo em momento tenso, P2 (IA) prestes a decidir
+  let board = [
+    [1, 0, 0, 0, 0],
+    [0, 0, P1,0, 0],
+    [1, 0, 0, 0, 1],
+    [0, 0, P2,0, 0],
+    [0, 1, 0, 0, 1],
+  ];
+  const posP1=[1,2], posP2=[3,2];
+
+  const HEU_W = { lib:0.55, mob:0.25, cen:0.10, trap:0.07, iso:0.03 };
+
+  // ── Funções de cálculo (espelho do jogo real) ─────────────────
+  function getValidMoves(r,c){
+    const dirs=[[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[-1,1],[1,-1],[1,1]];
+    return dirs.map(([dr,dc])=>[r+dr,c+dc])
+               .filter(([nr,nc])=>nr>=0&&nr<ROWS&&nc>=0&&nc<COLS&&board[nr][nc]===EMPTY);
+  }
+
+  function calcLibRel(aiMoves,opMoves){
+    let ai=0; aiMoves.forEach(([r,c])=>{ ai+=getValidMoves(r,c).length; });
+    let op=0; opMoves.forEach(([r,c])=>{ op+=getValidMoves(r,c).length; });
+    return (ai-op)/64;
+  }
+  function calcMob(ai,op){ return (ai.length-op.length)/8; }
+  function calcCen(aPos,oPos){
+    const cr=(ROWS-1)/2,cc=(COLS-1)/2,mx=Math.max(cr,cc);
+    const ad=Math.max(Math.abs(aPos[0]-cr),Math.abs(aPos[1]-cc));
+    const od=Math.max(Math.abs(oPos[0]-cr),Math.abs(oPos[1]-cc));
+    return (od-ad)/mx;
+  }
+  function calcTrap(opMoves){
+    if(!opMoves.length) return 1;
+    let tot=0;
+    const dirs=[[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[-1,1],[1,-1],[1,1]];
+    opMoves.forEach(([nr,nc])=>{
+      let bl=0;
+      dirs.forEach(([dr,dc])=>{
+        const r2=nr+dr,c2=nc+dc;
+        if(r2<0||r2>=ROWS||c2<0||c2>=COLS) bl++;
+        else if(board[r2][c2]===BLOCKED||board[r2][c2]===P1||board[r2][c2]===P2) bl++;
+      });
+      tot+=bl;
+    });
+    return ((tot/opMoves.length)/8-0.5)*2;
+  }
+  function calcIso(aiMoves){
+    if(!aiMoves.length) return 1;
+    let tot=0;
+    const dirs=[[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[-1,1],[1,-1],[1,1]];
+    aiMoves.forEach(([nr,nc])=>{
+      let bl=0;
+      dirs.forEach(([dr,dc])=>{
+        const r2=nr+dr,c2=nc+dc;
+        if(r2<0||r2>=ROWS||c2<0||c2>=COLS) bl++;
+        else if(board[r2][c2]===BLOCKED||board[r2][c2]===P1||board[r2][c2]===P2) bl++;
+      });
+      tot+=bl;
+    });
+    return ((tot/aiMoves.length)/8-0.5)*2;
+  }
+
+  // ── Calcula scores de Liberdade Relativa para cada destino ────
+  // Para cada casa onde a IA pode ir, calcula:
+  //   libFut  = movimentos disponíveis naquele destino (lookahead 1)
+  //   libScore = contribuição deste destino para o fator F1
+  //              = libFut / (soma total de lib da IA) — percentual da liberdade total
+  function calcDestScores(aiMoves){
+    const totAILib = aiMoves.reduce((s,[r,c])=>s+getValidMoves(r,c).length, 0);
+    return aiMoves.map(([r,c])=>{
+      const lib = getValidMoves(r,c).length;
+      // score relativo: quanto este destino representa da liberdade total da IA
+      const pct = totAILib>0 ? Math.round(lib/totAILib*100) : 0;
+      return { pos:[r,c], lib, pct };
+    });
+  }
+
+  // ── Renderização do tabuleiro ─────────────────────────────────
+  const boardEl = document.getElementById('demo-board');
+  let cells = [];
+
+  function buildBoard(){
+    boardEl.innerHTML='';
+    cells=[];
+    for(let r=0;r<ROWS;r++){
+      for(let c=0;c<COLS;c++){
+        const dc=document.createElement('div');
+        dc.className='dc';
+        dc.dataset.r=r; dc.dataset.c=c;
+        boardEl.appendChild(dc);
+        cells.push(dc);
+      }
+    }
+    renderBoard();
+  }
+
+  function renderBoard(highlights=null, bestPos=null, worstPos=null){
+    cells.forEach((dc,i)=>{
+      const r=Math.floor(i/COLS), c=i%COLS;
+      dc.className='dc';
+      dc.innerHTML='';
+      dc.removeAttribute('title');
+
+      if(board[r][c]===BLOCKED){
+        dc.classList.add('blocked');
+      } else if(board[r][c]===P1){
+        dc.classList.add('piece-p1');
+        const ic=document.createElement('span');
+        ic.className='piece-icon'; ic.textContent='⬡';
+        ic.style.color='var(--gold)';
+        dc.appendChild(ic);
+      } else if(board[r][c]===P2){
+        dc.classList.add('piece-p2');
+        const ic=document.createElement('span');
+        ic.className='piece-icon'; ic.textContent='⬡';
+        ic.style.color='#b0b8c8';
+        dc.appendChild(ic);
+      } else if(highlights){
+        // célula vazia com score de liberdade
+        const entry=highlights.find(h=>h.pos[0]===r&&h.pos[1]===c);
+        if(entry!==undefined){
+          const maxLib=8;
+          const lvl=Math.min(5,Math.round(entry.lib/maxLib*5));
+          dc.classList.add('heat-'+lvl);
+          if(bestPos&&bestPos[0]===r&&bestPos[1]===c) dc.classList.add('heat-best');
+          else if(worstPos&&worstPos[0]===r&&worstPos[1]===c) dc.classList.add('heat-worst');
+          const badge=document.createElement('div');
+          badge.style.cssText='position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px';
+          // linha 1: número de saídas futuras
+          const b1=document.createElement('span');
+          b1.style.cssText='font-size:0.75rem;font-weight:700;color:rgba(255,255,255,.9);line-height:1';
+          b1.textContent=entry.lib+'↗';
+          // linha 2: percentual da liberdade total
+          const b2=document.createElement('span');
+          b2.style.cssText='font-size:0.52rem;color:rgba(255,255,255,.5);line-height:1';
+          b2.textContent=entry.pct+'%';
+          badge.appendChild(b1);
+          badge.appendChild(b2);
+          dc.appendChild(badge);
+          dc.title=`${entry.lib} saídas futuras (${entry.pct}% da liberdade total da IA)`;
+        }
+      }
+    });
+  }
+
+  // ── Atualiza barras de breakdown ──────────────────────────────
+  function setBars(lib,mob,cen,trap,iso){
+    const total=(HEU_W.lib*lib + HEU_W.mob*mob + HEU_W.cen*cen + HEU_W.trap*trap - HEU_W.iso*iso)*100;
+    const set=(id,val,max)=>{
+      const pct=Math.min(Math.abs(val)/max*100,100);
+      document.getElementById('db-'+id).style.width=pct+'%';
+      document.getElementById('dbv-'+id).textContent=(val>=0?'+':'')+val.toFixed(2);
+    };
+    set('lib', lib*HEU_W.lib, HEU_W.lib);
+    set('mob', mob*HEU_W.mob, HEU_W.mob);
+    set('cen', cen*HEU_W.cen, HEU_W.cen);
+    set('trap',trap*HEU_W.trap,HEU_W.trap);
+    set('iso', iso*HEU_W.iso, HEU_W.iso);
+    document.getElementById('db-total').style.width=Math.min(Math.abs(total)/55*100,100)+'%';
+    document.getElementById('dbv-total').textContent=(total>=0?'+':'')+total.toFixed(1);
+    document.getElementById('demo-bars').style.display='flex';
+  }
+
+  // ── Passos narrados ───────────────────────────────────────────
+  const aiMoves=getValidMoves(posP2[0],posP2[1]);
+  const opMoves=getValidMoves(posP1[0],posP1[1]);
+  const destScores=calcDestScores(aiMoves);
+  const maxLib=Math.max(...destScores.map(d=>d.lib));
+  const minLib=Math.min(...destScores.map(d=>d.lib));
+  const bestDest=destScores.find(d=>d.lib===maxLib);
+  const worstDest=destScores.find(d=>d.lib===minLib);
+
+  const fLib=calcLibRel(aiMoves,opMoves);
+  const fMob=calcMob(aiMoves,opMoves);
+  const fCen=calcCen(posP2,posP1);
+  const fTrap=calcTrap(opMoves);
+  const fIso=calcIso(aiMoves);
+  const scoreTotal=(HEU_W.lib*fLib+HEU_W.mob*fMob+HEU_W.cen*fCen+HEU_W.trap*fTrap-HEU_W.iso*fIso)*100;
+
+  const STEPS = [
+    {
+      label: 'PASSO 1 / 5 — Leitura do estado',
+      text: `Este é o tabuleiro neste momento. <strong>⬡ dourado</strong> = Player 1 (humano), <strong>⬡ prata</strong> = IA. Casas escuras estão permanentemente bloqueadas.<br><br>
+             A IA tem <strong class="val-gold">${aiMoves.length} movimentos válidos</strong> agora. O Player 1 tem <strong>${opMoves.length}</strong>.<br><br>
+             A heurística não decide apenas com esse número — ela vai olhar <strong>o que acontece depois de cada movimento</strong>, avaliando qual destino preserva mais liberdade futura.`,
+      render: ()=> renderBoard()
+    },
+    {
+      label: 'PASSO 2 / 5 — F1: Liberdade Relativa (peso 0.55)',
+      text: `Para cada destino da IA, contamos quantas casas aquela posição ainda teria no próximo turno.<br>
+             Cada célula mostra: <strong>número ↗</strong> = saídas futuras &nbsp;|&nbsp; <strong>%</strong> = fatia da liberdade total da IA.<br><br>
+             <strong class="val-pos">Destino dourado: ${maxLib} saídas — melhor opção.</strong><br>
+             <strong class="val-neg">Destino vermelho: ${minLib} saída${minLib===1?'':'s'} — beco iminente.</strong><br><br>
+             <strong>Por que peso 0.55?</strong> Isolation termina quando alguém fica sem movimento. Liberdade futura é o fator mais diretamente ligado à vitória — nenhum outro captura o risco de ficar preso como este.`,
+      render: ()=>{
+        renderBoard(destScores, bestDest?.pos, worstDest?.pos);
+      }
+    },
+    {
+      label: 'PASSO 3 / 5 — F2 a F5: fatores complementares',
+      text: `Os outros quatro fatores refinam a decisão quando a liberdade relativa empata ou é insuficiente:<br><br>
+             <strong>F2 Mobilidade (0.25):</strong> diferença de movimentos <em>agora</em>. Peso alto — é o segundo sinal mais direto de vantagem tática.<br>
+             <strong>F3 Centralidade (0.10):</strong> posições centrais têm mais rotas de fuga. Peso baixo — desempate posicional, não decisivo sozinho.<br>
+             <strong>F4 Trap (0.07):</strong> quão fechados estão os destinos do adversário. Peso pequeno — previsão indireta, não garantia.<br>
+             <strong>F5 AutoIso (0.03 − penalidade):</strong> penaliza se os próprios destinos da IA estiverem muito fechados. Peso mínimo — só entra como correção de extremos.<br><br>
+             <strong>Soma absoluta dos pesos = 1.0.</strong> Todos os fatores normalizados para [−1, +1] antes da multiplicação — escala justa, sem que nenhum domine por magnitude.`,
+      render: ()=>{
+        renderBoard(destScores, bestDest?.pos, worstDest?.pos);
+        setBars(fLib,fMob,fCen,fTrap,fIso);
+      }
+    },
+    {
+      label: 'PASSO 4 / 5 — Score final composto H(s)',
+      text: `Aplicando os pesos aos valores calculados para este estado:<br><br>
+             <span style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;line-height:2.4;display:block">
+             F1 &nbsp;<span class="${fLib>=0?'val-pos':'val-neg'}">${(fLib*HEU_W.lib).toFixed(3)}</span> &nbsp;= ${fLib.toFixed(3)} × 0.55<br>
+             F2 &nbsp;<span class="${fMob>=0?'val-pos':'val-neg'}">${(fMob*HEU_W.mob).toFixed(3)}</span> &nbsp;= ${fMob.toFixed(3)} × 0.25<br>
+             F3 &nbsp;<span class="${fCen>=0?'val-pos':'val-neg'}">${(fCen*HEU_W.cen).toFixed(3)}</span> &nbsp;= ${fCen.toFixed(3)} × 0.10<br>
+             F4 &nbsp;<span class="${fTrap>=0?'val-pos':'val-neg'}">${(fTrap*HEU_W.trap).toFixed(3)}</span> &nbsp;= ${fTrap.toFixed(3)} × 0.07<br>
+             F5 &nbsp;<span class="val-neg">−${(fIso*HEU_W.iso).toFixed(3)}</span> = ${fIso.toFixed(3)} × 0.03 (penalidade)<br>
+             </span>
+             <strong style="font-size:1rem">H(s) = <span class="${scoreTotal>=0?'val-pos':'val-neg'}">${scoreTotal>=0?'+':''}${scoreTotal.toFixed(1)}</span></strong>
+             <span style="font-size:0.78rem;color:var(--fog)"> &nbsp;(×100 para compatibilidade com ±10000 dos estados terminais)</span><br><br>
+             ${scoreTotal>0
+               ? '<span class="val-pos">Score positivo</span> → IA em vantagem posicional neste estado.'
+               : '<span class="val-neg">Score negativo</span> → adversário em posição melhor.'}`,
+      render: ()=>{
+        renderBoard(destScores, bestDest?.pos, worstDest?.pos);
+        setBars(fLib,fMob,fCen,fTrap,fIso);
+      }
+    },
+    {
+      label: 'PASSO 5 / 5 — Decisão da IA',
+      text: `O Minimax/Alfa-Beta compara o score deste estado com os de todos os outros ramos e escolhe o caminho de <strong>maior score garantido</strong>.<br><br>
+             Neste estado, a IA escolhe o destino <strong class="val-gold">dourado</strong>:<br>
+             → <strong class="val-gold">${maxLib} saídas futuras</strong> (${destScores.find(d=>d.lib===maxLib)?.pct}% da liberdade total da IA)<br>
+             → maior contribuição para F1, o fator de maior peso (0.55)<br><br>
+             O destino <strong class="val-neg">vermelho é descartado</strong>:<br>
+             → apenas <strong class="val-neg">${minLib} saída${minLib===1?'':'s'}</strong> — a IA ficaria quase encurralada no turno seguinte<br><br>
+             <strong>Isso é a Heurística de Liberdade Relativa:</strong> não basta ter movimentos agora — é preciso garantir espaço nos próximos turnos.`,
+      render: ()=>{
+        renderBoard(destScores, bestDest?.pos, worstDest?.pos);
+        setBars(fLib,fMob,fCen,fTrap,fIso);
+      }
+    }
+  ];
+
+  let stepIdx = -1;
+
+  window.demoNext = function(){
+    if(stepIdx >= STEPS.length-1) return;
+    stepIdx++;
+    const s = STEPS[stepIdx];
+    document.getElementById('demo-step-label').textContent = s.label;
+    document.getElementById('demo-step-text').innerHTML  = s.text;
+    document.getElementById('demo-counter').textContent  = `${stepIdx+1} / ${STEPS.length}`;
+    document.getElementById('demo-next-btn').textContent = stepIdx===STEPS.length-1 ? '✓ CONCLUÍDO' : 'AVANÇAR ▶';
+    s.render();
+  };
+
+  window.demoReset = function(){
+    stepIdx=-1;
+    document.getElementById('demo-step-label').textContent='PASSO 0 / 5';
+    document.getElementById('demo-step-text').innerHTML='Clique em <strong>AVANÇAR</strong> para ver a heurística raciocinar sobre este estado do tabuleiro.';
+    document.getElementById('demo-counter').textContent='0 / 5';
+    document.getElementById('demo-next-btn').textContent='AVANÇAR ▶';
+    document.getElementById('demo-bars').style.display='none';
+    renderBoard();
+  };
+
+  buildBoard();
+})();
+</script>
+
+</body>
+</html>
